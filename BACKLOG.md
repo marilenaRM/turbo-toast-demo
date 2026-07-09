@@ -196,7 +196,11 @@ document why: the Twig helper renders a childless div) demonstrating:
 
 ---
 
-## US-008 — Demo README: feature ↔ URL map
+## US-008 — Demo README: feature ↔ URL map `[x]`
+
+> Done: README with sibling-checkout setup (composer install + asset-map:compile
+> + php -S), the golden-rule devtools check, an 18-row feature ↔ URL table
+> covering both transports, variants, hooks, hardening, logging and profiler.
 
 **Goal**: the demo is self-explanatory for a newcomer.
 

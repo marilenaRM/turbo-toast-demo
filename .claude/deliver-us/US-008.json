@@ -1,0 +1,30 @@
+{
+  "us_id": "US-008",
+  "started_at": "2026-07-09T12:40:00Z",
+  "last_updated": "2026-07-09T12:50:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "doc-only US, written inline by orchestrator (all facts verified during US-001..007)",
+  "plan": {
+    "doc_changes": [
+      "README setup + golden rule + feature/URL map",
+      "Mark US-008 in BACKLOG.md"
+    ],
+    "commit_message": "Map every bundle feature to its demo URL in the README"
+  },
+  "results": {
+    "review_findings": "table cross-checked against bundle README features: toast()/toasts()/composition/variants/role=alert/deferToast 302+303/private/no-replay/container helper/budget/5xx/guard/XSS/template hook/event hook/monolog channel/profiler/stylesheet \u2014 18 rows, nothing missing",
+    "test_status": "PASS (all URLs exercised earlier in session; setup steps mirror what was actually run)",
+    "findings_count": 0,
+    "corrector_applied": false,
+    "pr_url": "n/a (no git remote)"
+  }
+}
