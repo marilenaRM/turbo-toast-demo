@@ -1,0 +1,46 @@
+{
+  "us_id": "US-003",
+  "started_at": "2026-07-09T09:45:00Z",
+  "last_updated": "2026-07-09T10:00:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "same as US-001/US-002; architect phase done inline by orchestrator (design fully determined: literal toasts() call + prepended remove stream)",
+  "plan": {
+    "perimeters": [
+      {
+        "id": "A",
+        "label": "delete action + repository find/remove + row id/delete form",
+        "has_file_overlap_with": []
+      }
+    ],
+    "design_decision": "Backlog mandates the literal toasts(new Toast('Task deleted','warning'), new Toast('Undo is not implemented','info',8000)) call; the row removal is achieved by prepending a <turbo-stream action=remove> rendered via renderView() to the toasts() response content \u2014 keeps the documented API front and center while the UI stays coherent",
+    "review_criteria": [
+      "delete action literally calls $this->toasts(new Toast('Task deleted','warning'), new Toast('Undo is not implemented','info',8000))",
+      "locked task delete returns an error toast (role=alert rendered by bundle template)",
+      "row removal via turbo-stream remove targeting li id task-{id}",
+      "repository gains find()/remove() only; no other API growth",
+      "no session, no Set-Cookie, strict_types/final/PSR-12, no inline styles"
+    ],
+    "test_command": "curl suite on :8126 (delete normal task -> warning + info(8000) + remove stream; delete locked -> toast--error role=alert; no Set-Cookie)",
+    "doc_changes": [
+      "Mark US-003 done in BACKLOG.md with a one-line note"
+    ],
+    "commit_message": "Show toast variants on task deletion\n\nDeleting a task returns the literal toasts() composition (warning +\nlong-lived info) with a prepended remove stream for the row; deleting\nthe locked fixture returns an error toast (role=alert). Repository\ngains find() and remove().",
+    "pr_title": "US-003 - Toast variants: types, delays, multiples"
+  },
+  "results": {
+    "review_findings": "inline review by orchestrator (small diff): clean \u2014 literal toasts() call, remove stream prepended, error path role=alert, no session, no inline styles",
+    "test_status": "PASS (dev suite 8/8 + independent re-test: warning+info 8000+remove on normal delete, error+alert on locked, NO_COOKIE)",
+    "findings_count": 0,
+    "corrector_applied": false,
+    "pr_url": "n/a (no git remote)"
+  }
+}

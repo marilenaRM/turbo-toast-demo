@@ -73,7 +73,11 @@ cacheable-friendly to illustrate the bundle's pitch.
 
 ---
 
-## US-003 — Toast variants: types, delays, multiples
+## US-003 — Toast variants: types, delays, multiples `[x]`
+
+> Done: POST `/tasks/{id}/delete` returns the literal `toasts()` composition
+> (warning + info 8000 ms) with a prepended `remove` stream for the row;
+> the locked fixture returns a `toast--error` with `role="alert"`.
 
 **Goal**: illustrate `toasts()`, the type variants and per-toast delay.
 

@@ -1,6 +1,9 @@
-<li class="task-row">
+<li id="task-{{ task.id }}" class="task-row">
     {{ task.title }}
     {% if task.locked %}
         <span class="task-row__lock" title="Locked">🔒</span>
     {% endif %}
+    <form method="post" action="{{ path('app_task_delete', { id: task.id }) }}" class="task-row__delete">
+        <button type="submit">✕</button>
+    </form>
 </li>

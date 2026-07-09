@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Task\JsonFileTaskRepository;
 use App\Task\Task;
 use MarilenaRM\TurboToastBundle\Controller\TurboToastTrait;
+use MarilenaRM\TurboToastBundle\Toast\Toast;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -58,5 +59,34 @@ final class HomeController extends AbstractController
         $repository->add($task);
 
         return $this->toast('Task added');
+    }
+
+    #[Route('/tasks/{id}/delete', name: 'app_task_delete', methods: ['POST'])]
+    public function delete(string $id, JsonFileTaskRepository $repository): Response
+    {
+        $task = $repository->find($id);
+
+        if (null === $task) {
+            return $this->toast('Task not found', 'error');
+        }
+
+        if ($task->locked) {
+            return $this->toast(sprintf('"%s" is locked and cannot be deleted', $task->title), 'error');
+        }
+
+        $repository->remove($id);
+
+        $response = $this->toasts(
+            new Toast('Task deleted', 'warning'),
+            new Toast('Undo is not implemented', 'info', 8000),
+        );
+
+        // Compose the row-removal stream onto the toasts() response so the
+        // list stays in sync while toasts() remains the star of the show.
+        $response->setContent(
+            $this->renderView('task/delete.stream.html.twig', ['task' => $task]) . $response->getContent()
+        );
+
+        return $response;
     }
 }

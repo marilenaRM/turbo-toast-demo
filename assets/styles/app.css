@@ -17,3 +17,8 @@ body {
 .task-form {
     margin-top: 0.75rem;
 }
+
+.task-row__delete {
+    display: inline;
+    margin-left: 0.25rem;
+}

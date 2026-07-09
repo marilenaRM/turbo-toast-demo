@@ -49,6 +49,26 @@ final class JsonFileTaskRepository
         $this->write($tasks);
     }
 
+    public function find(string $id): ?Task
+    {
+        foreach ($this->all() as $task) {
+            if ($task->id === $id) {
+                return $task;
+            }
+        }
+
+        return null;
+    }
+
+    public function remove(string $id): void
+    {
+        $tasks = array_values(array_filter(
+            $this->all(),
+            static fn (Task $task): bool => $task->id !== $id,
+        ));
+        $this->write($tasks);
+    }
+
     /**
      * @return Task[]
      */
