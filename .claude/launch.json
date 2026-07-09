@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "localhost:8130", "-t", "public"],
+      "port": 8130
+    }
+  ]
+}

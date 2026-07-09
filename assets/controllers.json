@@ -13,11 +13,13 @@
         "@marilenarm/turbo-toast-bundle": {
             "toast": {
                 "enabled": true,
-                "fetch": "eager"
+                "fetch": "eager",
+                "name": "marilenarm/turbo-toast/toast"
             },
             "toast-container": {
                 "enabled": true,
-                "fetch": "eager"
+                "fetch": "eager",
+                "name": "marilenarm/turbo-toast/toast-container"
             }
         }
     },
