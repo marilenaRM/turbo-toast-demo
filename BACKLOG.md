@@ -215,7 +215,11 @@ the golden rule (no session anywhere — how to verify with devtools).
 
 ---
 
-## US-009 — `[review-debt]` Lock tasks.json writes against concurrent POSTs
+## US-009 — `[review-debt]` Lock tasks.json writes against concurrent POSTs `[x]`
+
+> Done: every repository access now runs inside a single `flock(LOCK_EX)`
+> section (open `c+` → read → mutate → truncate+write), seeding included;
+> verified with 10 concurrent POSTs — zero lost writes.
 
 `JsonFileTaskRepository::add()` does read-modify-write without `flock()`;
 two near-simultaneous POSTs can lose a write. Trivial `flock()` around the

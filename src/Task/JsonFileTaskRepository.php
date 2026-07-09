@@ -9,8 +9,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Stores tasks as JSON in var/tasks.json — no Doctrine, no session.
  *
- * Seeds two normal tasks and one locked task on first read (file missing),
- * the locked fixture being required by US-003 (task deletion).
+ * Seeds two normal tasks and one locked task on first read (file missing or
+ * empty), the locked fixture being required by US-003 (task deletion).
+ *
+ * Every access runs under an exclusive flock() so concurrent requests cannot
+ * lose a write: read-modify-write is atomic (US-009).
  */
 final class JsonFileTaskRepository
 {
@@ -25,28 +28,16 @@ final class JsonFileTaskRepository
      */
     public function all(): array
     {
-        if (!is_file($this->filePath)) {
-            $tasks = $this->fixtures();
-            $this->write($tasks);
-
-            return $tasks;
-        }
-
-        $contents = file_get_contents($this->filePath);
-        if (false === $contents) {
-            throw new \RuntimeException(sprintf('Could not read "%s".', $this->filePath));
-        }
-
-        $rows = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
-
-        return array_map($this->hydrate(...), $rows);
+        return $this->withLockedFile(null);
     }
 
     public function add(Task $task): void
     {
-        $tasks = $this->all();
-        $tasks[] = $task;
-        $this->write($tasks);
+        $this->withLockedFile(static function (array $tasks) use ($task): array {
+            $tasks[] = $task;
+
+            return $tasks;
+        });
     }
 
     public function find(string $id): ?Task
@@ -62,11 +53,62 @@ final class JsonFileTaskRepository
 
     public function remove(string $id): void
     {
-        $tasks = array_values(array_filter(
-            $this->all(),
+        $this->withLockedFile(static fn (array $tasks): array => array_values(array_filter(
+            $tasks,
             static fn (Task $task): bool => $task->id !== $id,
-        ));
-        $this->write($tasks);
+        )));
+    }
+
+    /**
+     * Reads the store under an exclusive lock, optionally applies a mutation,
+     * and writes back whenever the content changed (mutation or first seed).
+     *
+     * @param (callable(Task[]): Task[])|null $mutator
+     *
+     * @return Task[]
+     */
+    private function withLockedFile(?callable $mutator): array
+    {
+        $dir = \dirname($this->filePath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+
+        $handle = fopen($this->filePath, 'c+');
+        if (false === $handle) {
+            throw new \RuntimeException(sprintf('Could not open "%s".', $this->filePath));
+        }
+
+        try {
+            flock($handle, LOCK_EX);
+
+            $contents = stream_get_contents($handle);
+            $dirty = false;
+
+            if (false === $contents || '' === trim($contents)) {
+                $tasks = $this->fixtures();
+                $dirty = true;
+            } else {
+                $rows = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+                $tasks = array_map($this->hydrate(...), $rows);
+            }
+
+            if (null !== $mutator) {
+                $tasks = $mutator($tasks);
+                $dirty = true;
+            }
+
+            if ($dirty) {
+                rewind($handle);
+                ftruncate($handle, 0);
+                fwrite($handle, $this->encode($tasks));
+            }
+
+            return $tasks;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
     }
 
     /**
@@ -96,13 +138,8 @@ final class JsonFileTaskRepository
     /**
      * @param Task[] $tasks
      */
-    private function write(array $tasks): void
+    private function encode(array $tasks): string
     {
-        $dir = \dirname($this->filePath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
-        }
-
         $rows = array_map(static fn (Task $task): array => [
             'id' => $task->id,
             'title' => $task->title,
@@ -110,6 +147,6 @@ final class JsonFileTaskRepository
             'locked' => $task->locked,
         ], $tasks);
 
-        file_put_contents($this->filePath, json_encode($rows, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+        return json_encode($rows, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
     }
 }
