@@ -1,0 +1,46 @@
+{
+  "us_id": "US-004",
+  "started_at": "2026-07-09T10:05:00Z",
+  "last_updated": "2026-07-09T10:20:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "same as previous US; architect inline (design fully determined by backlog + bundle README)",
+  "plan": {
+    "perimeters": [
+      {
+        "id": "A",
+        "label": "ProfileController (profile + fake login) + templates + nav",
+        "has_file_overlap_with": []
+      }
+    ],
+    "design_decision": "GET/POST /profile (form data-turbo=false, deferToast('Profile saved') + redirect back) and GET/POST /login (Turbo-driven form, deferToast('Welcome back!') + 303 to /) \u2014 shows the cookie transport on both a hard full-page redirect and a Turbo Drive visit; nav added to base layout",
+    "review_criteria": [
+      "profile form carries data-turbo=\"false\"; controller calls deferToast then redirectToRoute (no toast()/toasts())",
+      "login POST returns 303 (HTTP_SEE_OTHER) after deferToast('Welcome back!')",
+      "redirect responses carry Set-Cookie: turbo_toast=<url-encoded JSON> and Cache-Control: private (bundle subscriber behavior \u2014 verify, don't reimplement)",
+      "no session, no Set-Cookie PHPSESSID anywhere; no security-bundle",
+      "strict_types/final/PSR-12; no inline styles; nav links via CSS classes"
+    ],
+    "test_command": "curl suite on :8128 (POST /profile -> 302 + turbo_toast cookie + private; POST /login -> 303 + cookie; GET pages -> no cookie)",
+    "doc_changes": [
+      "Mark US-004 done in BACKLOG.md with a one-line note"
+    ],
+    "commit_message": "Add deferred toast flows over classic redirects\n\nProfile form posts outside Turbo (data-turbo=false), the controller\nqueues a toast with deferToast() and redirects; a fake login POST does\nthe same with a 303. The bundle cookie subscriber transports the toasts\nand forces the redirect responses private.",
+    "pr_title": "US-004 - Cookie transport on a classic redirect (deferToast)"
+  },
+  "results": {
+    "review_findings": "inline review: clean; added aria-label on both inputs (a11y nit). sf_redirect cookie on redirects = dev profiler artifact, expected",
+    "test_status": "PASS (dev suite 7/7: 302+cookie+private on /profile, 303+cookie on /login, SameSite=Lax, no PHPSESSID anywhere)",
+    "findings_count": 0,
+    "corrector_applied": false,
+    "pr_url": "n/a (no git remote)"
+  }
+}

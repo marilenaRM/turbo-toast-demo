@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profile — Turbo Toast demo{% endblock %}
+
+{% block body %}
+    <h1>Profile</h1>
+    <p>
+        This form is posted with <code>data-turbo="false"</code>, bypassing Turbo
+        entirely: a full page POST followed by a classic redirect. The toast
+        still survives the round trip, carried by the short-lived
+        <code>turbo_toast</code> cookie instead of the session.
+    </p>
+
+    {# No persistence: this is a demo of the cookie transport, not a real profile feature. #}
+    <form method="post" action="{{ path('app_profile_save') }}" data-turbo="false" class="profile-form">
+        <input type="text" name="display_name" value="Marilena" aria-label="Display name">
+        <button type="submit">Save</button>
+    </form>
+{% endblock %}

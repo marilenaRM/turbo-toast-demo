@@ -22,3 +22,13 @@ body {
     display: inline;
     margin-left: 0.25rem;
 }
+
+.main-nav {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.profile-form {
+    margin-top: 0.75rem;
+}

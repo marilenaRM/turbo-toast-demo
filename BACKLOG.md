@@ -92,7 +92,12 @@ cacheable-friendly to illustrate the bundle's pitch.
 
 ---
 
-## US-004 — Cookie transport on a classic redirect (`deferToast()`)
+## US-004 — Cookie transport on a classic redirect (`deferToast()`) `[x]`
+
+> Done: `/profile` form posts with `data-turbo="false"` → `deferToast('Profile
+> saved')` + 302; `/login` fake form → `deferToast('Welcome back!')` + 303 to
+> `/`. Redirects carry `Set-Cookie: turbo_toast` (SameSite=Lax) and
+> `Cache-Control: private` (bundle subscriber); nav added to the layout.
 
 **Goal**: illustrate the second transport — full-page redirect flows.
 

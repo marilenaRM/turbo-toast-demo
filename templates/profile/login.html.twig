@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login — Turbo Toast demo{% endblock %}
+
+{% block body %}
+    <h1>Login</h1>
+    <p>
+        Fake login — no security bundle, no real authentication. The form POSTs
+        through Turbo Drive, which follows the 303 See Other redirect itself;
+        the cookie transport works for Turbo visits too, not just non-Turbo ones.
+    </p>
+
+    <form method="post" action="{{ path('app_login_check') }}" class="profile-form">
+        <input type="text" name="username" placeholder="Username" aria-label="Username">
+        <button type="submit">Log in</button>
+    </form>
+{% endblock %}

@@ -20,6 +20,11 @@
     </head>
     <body>
         {{ turbo_toast_container() }}
+        <nav class="main-nav">
+            <a href="{{ path('app_home') }}">Tasks</a>
+            <a href="{{ path('app_profile') }}">Profile</a>
+            <a href="{{ path('app_login') }}">Login</a>
+        </nav>
         {% block body %}{% endblock %}
     </body>
 </html>
