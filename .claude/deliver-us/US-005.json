@@ -1,0 +1,46 @@
+{
+  "us_id": "US-005",
+  "started_at": "2026-07-09T10:25:00Z",
+  "last_updated": "2026-07-09T10:50:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "same as previous US; architect inline (bundle log messages and exception text verified from source)",
+  "plan": {
+    "perimeters": [
+      {
+        "id": "A",
+        "label": "PlaygroundController + template + playground Stimulus controller + nav",
+        "has_file_overlap_with": []
+      }
+    ],
+    "review_criteria": [
+      "four scenarios each reproducible from the UI with a short explanation",
+      "oversized: deferToast(str_repeat) > 3.8KB -> no turbo_toast cookie on redirect, warning 'Dropped {dropped} of {total} queued toast(s) exceeding the cookie size budget.' in turbo_toast channel",
+      "5xx: deferToast then throw -> 500, no cookie, warning 'Discarded {count} queued toast(s): the response is a server error.'",
+      "non-Turbo toast(): plain data-turbo=false GET link -> LogicException message visible on dev error page",
+      "tampered cookie: Stimulus controller writes forged cookie with HTML payload then Turbo.visit -> rendered inert (in-browser check)",
+      "no session; strict_types/final/PSR-12; no inline styles"
+    ],
+    "test_command": "curl suite on :8129 + grep var/log/dev.log for turbo_toast channel records",
+    "doc_changes": [
+      "Mark US-005 done in BACKLOG.md with a one-line note"
+    ],
+    "commit_message": "Add hardening playground with observable edge cases\n\nFour reproducible scenarios: oversized deferred toast dropped by the\ncookie budget, 5xx discarding queued toasts, the non-Turbo toast()\nguard failing loudly, and a forged turbo_toast cookie rendered inert.\nThe first two log warnings on the turbo_toast monolog channel.",
+    "pr_title": "US-005 - Playground: edge cases and observability"
+  },
+  "results": {
+    "review_findings": "inline review: clean \u2014 explanations sourced from hardening.md, bundle behaviors triggered not reimplemented, no session, no inline styles",
+    "test_status": "PASS (dev suite 8/8; turbo_toast.WARNING Dropped/Discarded records confirmed in dev.log; scenario 4 JS wiring verified, in-browser check pending)",
+    "findings_count": 0,
+    "corrector_applied": false,
+    "pr_url": "n/a (no git remote)"
+  }
+}

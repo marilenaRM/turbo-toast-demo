@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Playground — Turbo Toast demo{% endblock %}
+
+{% block body %}
+    <h1>Playground</h1>
+    <p>
+        Four hardening scenarios from the bundle's threat model, each
+        reproducible below. Scenarios 1 and 2 write warnings on the
+        <code>turbo_toast</code> monolog channel — open the profiler
+        <strong>Logs</strong> panel of that request (for the crash, the
+        500 request's own profile) to see them.
+    </p>
+
+    <section class="playground-scenario">
+        <h2>1. Oversized deferred toast</h2>
+        <p>
+            Browsers cap a cookie at ~4096 bytes for the whole
+            <code>Set-Cookie</code> line. The subscriber measures the
+            url-encoded payload against a conservative 3.8&nbsp;KB budget; a
+            single toast already over that budget gets no cookie at all — a
+            missing toast beats a broken one.
+        </p>
+        <form method="post" action="{{ path('app_playground_oversized') }}" data-turbo="false">
+            <button type="submit">Queue an oversized toast</button>
+        </form>
+    </section>
+
+    <section class="playground-scenario">
+        <h2>2. 5xx discard</h2>
+        <p>
+            A toast is queued, then the request crashes with a 500. The
+            subscriber drains and discards queued toasts on server errors,
+            so a toast never lies about a request that actually failed.
+        </p>
+        <form method="post" action="{{ path('app_playground_crash') }}" data-turbo="false">
+            <button type="submit">Queue a toast, then crash</button>
+        </form>
+    </section>
+
+    <section class="playground-scenario">
+        <h2>3. Non-Turbo toast() guard</h2>
+        <p>
+            <code>toast()</code> returns a Turbo Stream response. Served to a
+            client that never asked for one, that response would render as
+            raw <code>&lt;turbo-stream&gt;</code> markup, so the renderer
+            refuses non-Turbo requests and throws an actionable
+            <code>LogicException</code> instead.
+        </p>
+        <a href="{{ path('app_playground_non_turbo') }}" data-turbo="false">Hit toast() without a Turbo Stream Accept header</a>
+    </section>
+
+    <section class="playground-scenario" data-controller="playground">
+        <h2>4. Tampered cookie</h2>
+        <p>
+            The <code>turbo_toast</code> cookie is deliberately not
+            <code>HttpOnly</code> and not signed: anyone can rewrite it in
+            the DevTools console. The container controller inserts the
+            message with <code>textContent</code> only, so a forged HTML
+            payload renders as inert text instead of executing.
+        </p>
+        <button type="button" data-action="playground#forgeCookie">Forge a cookie with an HTML payload</button>
+    </section>
+{% endblock %}

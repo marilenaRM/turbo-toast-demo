@@ -117,7 +117,12 @@ cacheable-friendly to illustrate the bundle's pitch.
 
 ---
 
-## US-005 — Playground: edge cases and observability
+## US-005 — Playground: edge cases and observability `[x]`
+
+> Done: `/playground` — oversized deferToast (no cookie + "Dropped" warning),
+> 5xx crash (toast discarded + "Discarded" warning), non-Turbo `toast()` guard
+> (LogicException on dev error page), forged-cookie button (Stimulus
+> `playground` controller + `Turbo.visit`, rendered inert by `textContent`).
 
 **Goal**: illustrate the hardening behaviors and the logging channel.
 

@@ -32,3 +32,9 @@ body {
 .profile-form {
     margin-top: 0.75rem;
 }
+
+.playground-scenario {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ccc;
+}
