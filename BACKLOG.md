@@ -145,7 +145,14 @@ cacheable-friendly to illustrate the bundle's pitch.
 
 ---
 
-## US-006 — Customization page: template hook + event hook
+## US-006 — Customization page: template hook + event hook `[x]`
+
+> Done: `/custom` overrides the layout container block with a manual
+> `#custom-toasts` div (helper renders a childless div; distinct id to avoid
+> the data-turbo-permanent collision). Template target = icon +
+> `[data-toast-message]`; event hook = README-style module-level listener
+> (lifecycle-bound listeners miss the event during the permanent swap) into a
+> console notifier; both paths textContent-only (script payload stays inert).
 
 **Goal**: illustrate both cookie-rendering customization hooks.
 

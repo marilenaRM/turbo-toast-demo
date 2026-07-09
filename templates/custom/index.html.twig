@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Custom — Turbo Toast demo{% endblock %}
+
+{#
+    turbo_toast_container() renders a childless <div id="toasts" ...></div>
+    (see vendor/marilenarm/turbo-toast-bundle/templates/container.html.twig).
+    A <template> customization target can only exist *inside* the container,
+    so the only way to add one is to override the toast_container block and
+    write the container markup by hand, wiring the same Stimulus controller
+    ourselves. That's what this page does below.
+
+    The id is deliberately "custom-toasts", not the default "toasts": both
+    containers are data-turbo-permanent, and two permanent elements sharing
+    the same id would collide across Turbo Drive visits (Turbo keeps the
+    first one it saw and ignores the replacement).
+#}
+{% block toast_container %}
+    <div id="custom-toasts" aria-live="polite" data-turbo-permanent
+         {{ stimulus_controller('marilenarm/turbo-toast/toast-container', {
+             cookieName: 'turbo_toast',
+             toastController: 'marilenarm--turbo-toast--toast',
+         }) }}>
+        <template data-marilenarm--turbo-toast--toast-container-target="template">
+            <div class="custom-toast" data-controller="marilenarm--turbo-toast--toast"
+                 data-action="click->marilenarm--turbo-toast--toast#dismiss">
+                <svg class="custom-toast__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+                <span data-toast-message></span>
+            </div>
+        </template>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <h1>Custom</h1>
+    <p>
+        This page replaces the bundle's default toast container with a
+        hand-written one, to demonstrate the two customization hooks
+        documented in the bundle's README.
+    </p>
+
+    <h2>Hook 1 — template target</h2>
+    <p>
+        The container above declares a <code>&lt;template&gt;</code> target.
+        Its root element is cloned for every toast, gets a
+        <code>toast--{type}</code> class, and the message is written as
+        <code>textContent</code> into the <code>[data-toast-message]</code>
+        slot — never <code>innerHTML</code>, so a message carrying
+        <code>&lt;script&gt;</code> markup renders as inert plain text.
+    </p>
+
+    {# No persistence: this demo illustrates the cookie transport, not a real feature.
+       The form stays Turbo-driven on purpose: a hard reload would reset the
+       hook-2 checkbox below before the deferred toast gets consumed. #}
+    <form method="post" action="{{ path('app_custom_notify') }}" class="custom-notify-form">
+        <input type="text" name="message" value="Custom toast &lt;script&gt;alert('xss')&lt;/script&gt;" aria-label="Toast message">
+        <select name="type" aria-label="Toast type">
+            <option value="success">success</option>
+            <option value="info">info</option>
+            <option value="warning">warning</option>
+            <option value="error">error</option>
+        </select>
+        <button type="submit">Send a deferred toast</button>
+    </form>
+
+    <h2>Hook 2 — cancel the <code>:append</code> event</h2>
+    <p>
+        The container dispatches a cancelable
+        <code>marilenarm--turbo-toast--toast-container:append</code> event
+        before rendering each toast. A listener can call
+        <code>preventDefault()</code> to take over rendering entirely — here,
+        into a homemade console-style notifier. It also uses
+        <code>textContent</code> only, so the same script-bearing message
+        stays inert.
+    </p>
+
+    {# data-turbo-permanent: the checkbox state and the notifier lines must
+       survive the Turbo visit that follows the POST, since the deferred toast
+       is only consumed on the next turbo:load. #}
+    <section id="custom-hooks-panel" data-turbo-permanent data-controller="custom-hooks">
+        <label><input type="checkbox" data-custom-hooks-target="toggle"> Cancel the :append event and render into the console notifier below</label>
+        <div class="console-notifier" data-custom-hooks-target="log" aria-live="polite"></div>
+    </section>
+{% endblock %}

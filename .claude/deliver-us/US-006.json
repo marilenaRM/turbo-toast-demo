@@ -1,0 +1,52 @@
+{
+  "us_id": "US-006",
+  "started_at": "2026-07-09T11:30:00Z",
+  "last_updated": "2026-07-09T12:10:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "same as previous US; architect inline (container controller API read from source)",
+  "plan": {
+    "perimeters": [
+      {
+        "id": "A",
+        "label": "CustomController + /custom template (manual container, template hook, event hook) + custom-hooks Stimulus controller",
+        "has_file_overlap_with": []
+      }
+    ],
+    "design_decisions": [
+      "base.html.twig toast container wrapped in a Twig block so /custom can override it with the manual div",
+      "custom container gets its own id custom-toasts (a second data-turbo-permanent #toasts would collide with the default container across Turbo visits) + own CSS",
+      "icon = inline SVG checkmark (no ux-icons dependency, KISS)",
+      "event hook via app Stimulus controller custom-hooks (checkbox target + console-style log target), textContent only"
+    ],
+    "review_criteria": [
+      "manual container div documented (helper renders a childless div, template must live inside)",
+      "template target renders icon + [data-toast-message] slot; root gets toast--{type} + delay value (bundle behavior)",
+      "checkbox ON -> :append cancelled, homemade console notifier shows the message; OFF -> default/template path",
+      "script-looking message rendered as plain text in BOTH paths",
+      "no session; strict_types/final/PSR-12; no inline styles"
+    ],
+    "test_command": "curl suite on :8131 + in-browser pass by orchestrator (preview server)",
+    "doc_changes": [
+      "Mark US-006 done in BACKLOG.md with a one-line note"
+    ],
+    "commit_message": "Add customization page for both cookie-rendering hooks\n\n/custom overrides the layout container with a manually written div\nowning a <template> target (icon + data-toast-message slot, custom\nCSS) and a checkbox-toggled listener that cancels :append to render\nthrough a console-style notifier. Both paths stay XSS-inert.",
+    "pr_title": "US-006 - Customization page: template hook + event hook"
+  },
+  "results": {
+    "review_findings": "orchestrator browser pass found 2 real issues, fixed inline: (1) data-turbo=false form reset the checkbox before cookie consumption -> form left Turbo-driven + section made data-turbo-permanent; (2) lifecycle-bound :append listener missed the event during Turbo permanent swap -> module-level document listener (README pattern) with explanatory comment",
+    "test_status": "PASS (dev curl suite 6/6 + browser: template hook renders icon+toast--{type}+inert script; event hook cancels default and logs [type] message inert; checkbox-off counter-check OK)",
+    "findings_count": 2,
+    "corrector_applied": true,
+    "corrector_mode": "inline (orchestrator, browser-verified)",
+    "pr_url": "n/a (no git remote)"
+  }
+}
