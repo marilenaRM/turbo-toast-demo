@@ -1,0 +1,31 @@
+{
+  "us_id": "US-007",
+  "started_at": "2026-07-09T12:20:00Z",
+  "last_updated": "2026-07-09T12:35:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "verification-only US, run inline by orchestrator (panel is bundle code); README section written here, completed in US-008",
+  "plan": {
+    "verification": "curl X-Debug-Token flows -> /_profiler/{token}?panel=turbo_toast and /_wdt/{token}",
+    "doc_changes": [
+      "README profiler section",
+      "Mark US-007 in BACKLOG.md"
+    ],
+    "commit_message": "Document the Turbo Toast profiler panel"
+  },
+  "results": {
+    "review_findings": "composed POST /tasks not counted by the panel (bypasses renderer) - documented as expected behavior in README",
+    "test_status": "PASS (streams: quick-add 'Task added' + delete both toasts listed; deferred: 'Profile saved' queued/transported; crash: sf-toolbar-status-red 1)",
+    "findings_count": 0,
+    "corrector_applied": false,
+    "pr_url": "n/a (no git remote)"
+  }
+}

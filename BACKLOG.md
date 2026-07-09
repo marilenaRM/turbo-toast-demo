@@ -172,7 +172,12 @@ document why: the Twig helper renders a childless div) demonstrating:
 
 ---
 
-## US-007 — Profiler tour
+## US-007 — Profiler tour `[x]`
+
+> Done: verified via debug tokens — quick-add/delete listed under "Rendered as
+> Turbo Streams", profile/login under "Deferred through the cookie", crash
+> shows discarded=1 with the red toolbar status; README section explains the
+> panel (incl. why the composed include on POST /tasks is not counted).
 
 **Goal**: make the Turbo Toast profiler panel discoverable.
 
