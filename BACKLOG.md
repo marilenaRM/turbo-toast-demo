@@ -20,7 +20,11 @@ cacheable-friendly to illustrate the bundle's pitch.
 
 ---
 
-## US-001 — Bootstrap the app with the bundle installed
+## US-001 — Bootstrap the app with the bundle installed `[x]`
+
+> Done: Symfony 7.4 skeleton + minimal packages (no doctrine), bundle from the
+> `../TurboToastBundle` path repo (symlinked `@dev`), container in base layout,
+> sessions disabled outright (`framework.session: false`) to enforce the pitch.
 
 **Goal**: a running Symfony 7 app with the bundle wired.
 

@@ -1,0 +1,25 @@
+{
+    "controllers": {
+        "@symfony/ux-turbo": {
+            "turbo-core": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "mercure-turbo-stream": {
+                "enabled": false,
+                "fetch": "eager"
+            }
+        },
+        "@marilenarm/turbo-toast-bundle": {
+            "toast": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "toast-container": {
+                "enabled": true,
+                "fetch": "eager"
+            }
+        }
+    },
+    "entrypoints": []
+}

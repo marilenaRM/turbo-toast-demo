@@ -1,0 +1,14 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # The whole demo proves the session-free claim of turbo-toast-bundle:
+    # sessions are disabled outright so no code path can ever start one.
+    session: false
+
+    #esi: true
+    #fragments: true
+
+when@test:
+    framework:
+        test: true

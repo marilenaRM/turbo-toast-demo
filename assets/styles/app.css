@@ -1,0 +1,7 @@
+/* Relative path required: AssetMapper's CssAssetUrlCompiler resolves @import
+   against the importing file's directory only, never logical @namespace paths. */
+@import '../../vendor/marilenarm/turbo-toast-bundle/assets/styles/toast.css';
+
+body {
+    background-color: skyblue;
+}

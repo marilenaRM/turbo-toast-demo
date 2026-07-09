@@ -1,0 +1,6 @@
+marilena_rm_turbo_toast:
+    target: toasts
+    controller_name: marilenarm/turbo-toast/toast
+    default_delay: 5000
+    stream_template: '@MarilenaRMTurboToast/toast.stream.html.twig'
+    cookie_name: turbo_toast

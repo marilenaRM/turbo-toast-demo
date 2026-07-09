@@ -1,0 +1,61 @@
+{
+  "us_id": "US-001",
+  "started_at": "2026-07-09T08:35:00Z",
+  "last_updated": "2026-07-09T09:00:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": {
+    "no_git_remote": "commit locally, no push/PR in Phase 7",
+    "worktree": "main checked out in primary worktree; staying on branch marilenMR/adoring-chebyshev-548f40, one commit per US (plan.branch not created)",
+    "no_test_suite": "demo rule: no PHPUnit; test_command = lint + debug:container + php -S + curl checks",
+    "dev_isolation": "single perimeter + composer targets this exact dir; dev agent runs in place, no worktree isolation"
+  },
+  "plan": {
+    "branch": "feat/us-001-bootstrap (not created \u2014 see adaptations)",
+    "perimeters": [
+      {
+        "id": "A",
+        "label": "Bootstrap Symfony 7 skeleton, wire the bundle, base layout, homepage",
+        "has_file_overlap_with": [],
+        "prompt_ref": "passed verbatim to dev agent (see architect output in session transcript)"
+      }
+    ],
+    "review_criteria": [
+      "composer.json path repo ../TurboToastBundle symlink:true, require @dev, vendor symlink verified",
+      "config/packages/marilena_rm_turbo_toast.yaml matches documented defaults exactly",
+      "base.html.twig calls turbo_toast_container(); homepage HTML has data-controller=marilenarm--turbo-toast--toast-container, aria-live=polite, data-turbo-permanent",
+      "bundle stylesheet genuinely served through AssetMapper (debug:asset-map verified)",
+      "debug:container marilena_rm_turbo_toast.renderer shows service + ToastRendererInterface alias",
+      "no session access anywhere; GET / sets no Set-Cookie",
+      "no Doctrine, minimal package set only",
+      "strict_types, final, PSR-12 in new PHP files",
+      "HomeController generic + comment about US-002 reuse",
+      "config/bundles.php lists MarilenaRMTurboToastBundle"
+    ],
+    "symfony_ux_compliance_angle": "Do not hand-write a competing container div, do not rename Stimulus identifiers, no Encore import syntax under AssetMapper, controllers.json/importmap via Flex as single source of truth unless verification proves Flex did not sync",
+    "test_command": "php bin/console cache:clear --env=dev && php bin/console lint:yaml config/ && php bin/console lint:twig templates/ && php bin/console debug:container marilena_rm_turbo_toast.renderer | grep -i 'ToastRendererInterface\\|marilena_rm_turbo_toast.renderer' && (php -S localhost:8000 -t public & SERVER_PID=$!; sleep 1; curl -sD /tmp/toast-demo-headers.txt -o /tmp/toast-demo-body.html localhost:8000/; grep -E 'data-controller=\"marilenarm--turbo-toast--toast-container\"' /tmp/toast-demo-body.html && grep -E 'aria-live' /tmp/toast-demo-body.html && grep -E 'data-turbo-permanent' /tmp/toast-demo-body.html; ! grep -qi 'set-cookie' /tmp/toast-demo-headers.txt && echo 'OK: no Set-Cookie header'; kill $SERVER_PID)",
+    "doc_changes": [
+      "Mark US-001 done in BACKLOG.md with a one-line implementation note"
+    ],
+    "commit_message": "Bootstrap Symfony 7 skeleton and wire turbo-toast-bundle via local path repository",
+    "pr_title": "US-001: Bootstrap the app with the bundle installed",
+    "pr_body": "(no remote \u2014 commit local only)"
+  },
+  "results": {
+    "review_findings": "F1 css logical-path import: REJECTED with evidence (CssAssetUrlCompiler resolves @import relative to file only, vendor line 73); F2 framework.session -> disabled (session: false); nit Kernel strict_types applied; nit leftover hello_controller.js kept (file deletion forbidden by user rules)",
+    "test_status": "PASS",
+    "findings_count": 2,
+    "corrector_applied": true,
+    "corrector_mode": "inline (one-liners)",
+    "commit": "28a28df",
+    "pr_url": "n/a (no git remote \u2014 local commit only)"
+  }
+}

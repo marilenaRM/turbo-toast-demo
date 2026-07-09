@@ -1,0 +1,15 @@
+framework:
+    asset_mapper:
+        # The paths to make available to the asset mapper.
+        paths:
+            - assets/
+            - value: vendor/marilenarm/turbo-toast-bundle/assets/dist
+              namespace: '@marilenarm/turbo-toast-bundle'
+            - value: vendor/marilenarm/turbo-toast-bundle/assets/styles
+              namespace: '@marilenarm/turbo-toast-bundle/styles'
+        missing_import_mode: strict
+
+when@prod:
+    framework:
+        asset_mapper:
+            missing_import_mode: warn
