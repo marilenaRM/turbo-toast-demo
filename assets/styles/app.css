@@ -5,3 +5,15 @@
 body {
     background-color: skyblue;
 }
+
+.task-row {
+    margin-bottom: 0.25rem;
+}
+
+.task-row__lock {
+    margin-left: 0.25rem;
+}
+
+.task-form {
+    margin-top: 0.75rem;
+}

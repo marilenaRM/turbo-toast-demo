@@ -49,7 +49,13 @@ cacheable-friendly to illustrate the bundle's pitch.
 
 ---
 
-## US-002 — Turbo Stream toast on task creation (composed stream)
+## US-002 — Turbo Stream toast on task creation (composed stream) `[x]`
+
+> Done: `/` lists tasks from `JsonFileTaskRepository` (var/tasks.json, seeded
+> with one locked fixture for US-003); POST `/tasks` returns the composed
+> `task/create.stream.html.twig` (row append + toast partial include), with the
+> same Accept guard as the bundle renderer; POST `/tasks/quick` uses the bare
+> `$this->toast()` shortcut.
 
 **Goal**: illustrate `toast()` and stream composition (the nominal AJAX flow).
 
@@ -176,6 +182,14 @@ the golden rule (no session anywhere — how to verify with devtools).
 - Following the README from a clean checkout gets the demo running.
 - Every bundle feature (both transports, variants, hooks, hardening behaviors,
   profiler, logging) appears in the mapping table with its URL.
+
+---
+
+## US-009 — `[review-debt]` Lock tasks.json writes against concurrent POSTs
+
+`JsonFileTaskRepository::add()` does read-modify-write without `flock()`;
+two near-simultaneous POSTs can lose a write. Trivial `flock()` around the
+read+write would fix it. Demo-grade tolerance accepted in US-002 review.
 
 ---
 

@@ -1,0 +1,53 @@
+{
+  "us_id": "US-002",
+  "started_at": "2026-07-09T09:05:00Z",
+  "last_updated": "2026-07-09T09:40:00Z",
+  "completed_phases": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "environment_adaptations": "same as US-001 (see US-001.json): local commits on session branch, no push/PR, verification by running the app",
+  "plan": {
+    "branch": "feat/us-002-stream-toast (session branch used)",
+    "perimeters": [
+      {
+        "id": "A",
+        "label": "Task domain + list/create controller + Turbo stream toast templates",
+        "has_file_overlap_with": [],
+        "prompt_ref": "passed verbatim to dev agent"
+      }
+    ],
+    "review_criteria": [
+      "No session usage; framework.session stays false; no Set-Cookie on any response",
+      "No Doctrine, no Form component, no security-bundle, no CSRF token",
+      "Route / name app_home preserved; POST /tasks composed; POST /tasks/quick bare toast()",
+      "create.stream.html.twig: append target=tasks (row) + append target=toasts (toast in <template>), success, delay 5000, controller marilenarm/turbo-toast/toast",
+      "create action Content-Type text/vnd.turbo-stream.html; quick uses $this->toast()",
+      "ul id tasks matches append target; toasts matches config target",
+      "Repository seeds fixtures incl. exactly one locked task; all()/add() only; var/tasks.json",
+      "PSR-12, strict_types, final/readonly, no inline styles; var/ gitignored"
+    ],
+    "symfony_ux_compliance_angle": "Composed turbo-stream on POST; Turbo idioms action/target/template; no hand-written Stimulus; session-free",
+    "test_command": "see architect output (curl suite on :8123)",
+    "doc_changes": [
+      "Mark US-002 done in BACKLOG.md with one-line note"
+    ],
+    "commit_message": "Add task list with Turbo Stream toast on creation\n\nList tasks at / from a JSON-file repository and add a Turbo form that\nPOSTs to /tasks, returning a composed turbo-stream that appends the new\nrow and a success toast. Add a quick-add action using the bundle bare\ntoast() shortcut. Seed a locked fixture task for upcoming deletion work.\nNo session, no Doctrine, no Form component.",
+    "pr_title": "US-002 - Turbo Stream toast on task creation (composed stream)",
+    "pr_body": "(no remote - local commit only; AI-reference footer stripped per user rules)"
+  },
+  "results": {
+    "review_findings": "F1 blocker (missing Accept guard in create()): FIXED inline; F1b/F2 (compose via toasts() instead of partial include): REJECTED \u2014 the partial-include composition IS the documented README pattern this US must illustrate; F3 nit: applied (toast message includes task title); F4 (file_get_contents guard): FIXED; F5 (flock concurrency): deferred as US-009 [review-debt] in BACKLOG; F6/F7 nits: skipped (YAGNI)",
+    "test_status": "PASS (17/17 tester checks + post-fix re-verification: guard 500s without Accept, composed stream OK, no cookie)",
+    "findings_count": 6,
+    "corrector_applied": true,
+    "corrector_mode": "inline",
+    "pr_url": "n/a (no git remote)"
+  }
+}

@@ -1,0 +1,6 @@
+<li class="task-row">
+    {{ task.title }}
+    {% if task.locked %}
+        <span class="task-row__lock" title="Locked">🔒</span>
+    {% endif %}
+</li>

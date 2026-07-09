@@ -1,0 +1,16 @@
+<turbo-stream action="append" target="tasks">
+    <template>
+        {{- include('task/_row.html.twig', { task: task }) -}}
+    </template>
+</turbo-stream>
+
+<turbo-stream action="append" target="toasts">
+    <template>
+        {{- include('@MarilenaRMTurboToast/toast.html.twig', {
+            message: 'Task “' ~ task.title ~ '” added',
+            type: 'success',
+            delay: 5000,
+            controller: 'marilenarm/turbo-toast/toast',
+        }) -}}
+    </template>
+</turbo-stream>

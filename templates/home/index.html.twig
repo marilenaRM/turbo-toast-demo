@@ -5,4 +5,19 @@
 {% block body %}
     <h1>Turbo Toast demo — bootstrap OK</h1>
     <p>Session-free flash/toast notifications for Symfony.</p>
+
+    <ul id="tasks">
+        {% for task in tasks %}
+            {{ include('task/_row.html.twig', { task: task }) }}
+        {% endfor %}
+    </ul>
+
+    <form method="post" action="{{ path('app_task_create') }}" class="task-form">
+        <input type="text" name="title" placeholder="New task title">
+        <button type="submit">Add task</button>
+    </form>
+
+    <form method="post" action="{{ path('app_task_quick') }}" class="task-form">
+        <button type="submit">Quick add</button>
+    </form>
 {% endblock %}
