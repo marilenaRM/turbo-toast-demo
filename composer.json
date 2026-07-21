@@ -83,6 +83,9 @@
         }
     },
     "require-dev": {
+        "phpunit/phpunit": "^12.5",
+        "playwright-php/playwright": "^1.2",
+        "playwright-php/playwright-symfony": "^0.9",
         "symfony/debug-bundle": "7.4.*",
         "symfony/web-profiler-bundle": "7.4.*"
     }

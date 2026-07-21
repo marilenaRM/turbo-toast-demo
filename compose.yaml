@@ -24,5 +24,30 @@ services:
       sh -c "composer install --no-interaction --prefer-dist &&
              exec frankenphp run --config /etc/frankenphp/Caddyfile"
 
+  # Browser E2E suite (Playwright PHP). Off by default; run with:
+  #   docker compose --profile e2e run --build --rm e2e
+  e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile.e2e
+    profiles: ["e2e"]
+    volumes:
+      - .:/app
+      - ../TurboToastBundle:/TurboToastBundle
+      - vendor-e2e:/app/vendor
+      - var-e2e:/app/var
+      - ms-playwright:/root/.cache/ms-playwright
+    environment:
+      APP_ENV: test
+      PLAYWRIGHT_E2E: "1"
+      PLAYWRIGHT_HEADLESS: "true"
+    command: >
+      sh -c "composer install --no-interaction &&
+             vendor/bin/playwright-install --with-deps &&
+             vendor/bin/phpunit --testsuite e2e"
+
 volumes:
   vendor:
+  vendor-e2e:
+  var-e2e:
+  ms-playwright:

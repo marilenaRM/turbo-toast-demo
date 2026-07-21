@@ -1,0 +1,8 @@
+# Under config/packages/test/, so it only loads in the test environment
+# (the playwright bundle itself is enabled for `test` only in config/bundles.php).
+playwright:
+    # The in-process client routes browser requests for these hosts back
+    # through the Symfony kernel instead of over the network.
+    base_url: 'http://localhost'
+    intercepted_hosts: ['localhost', '127.0.0.1']
+    debug_logging: false

@@ -104,3 +104,31 @@ Two subtleties worth knowing:
   by the panel. The panel traces the PHP API, not raw template includes.
 - The `turbo_toast` monolog channel records the cookie-budget and 5xx-discard
   warnings; they show up in the profiler **Logs** panel of the same requests.
+
+## Browser end-to-end tests (Playwright PHP)
+
+The bundle's whole value is client-side — toasts that auto-dismiss, a cookie
+consumed on load, a forged payload rendered inert, a cancelable event. None of
+that is visible to a curl-level check (during the build, a Stimulus identifier
+mismatch let toasts render but never connect/auto-dismiss, and curl never saw
+it). So the interesting behaviours are covered by a small
+[Playwright PHP](https://github.com/playwright-php) suite in `tests/E2E/`,
+driving a real headless browser against the kernel handled in-process.
+
+```bash
+# needs Node 20+ and the Playwright browsers:
+vendor/bin/playwright-install --with-deps
+PLAYWRIGHT_E2E=1 vendor/bin/phpunit --testsuite e2e
+
+# …or fully containerised (Node + browsers baked into a dedicated image):
+docker compose --profile e2e run --build --rm e2e
+```
+
+The suite asserts the Stimulus controller actually connects (the toast is gone
+after its delay), the deferred cookie is consumed and cleared on landing, a
+forged HTML payload renders as inert text, and the `:append` event is
+cancelable. One deliberate gap: the *server sets the `turbo_toast` cookie on a
+redirect* half of `deferToast()` can't be exercised in-process — Playwright's
+`route.fulfill()` doesn't propagate a response `Set-Cookie` into the browser
+jar — so that hop stays covered by the curl checks above, and the tests seed
+the cookie through the client API to exercise the browser half.

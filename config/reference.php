@@ -949,6 +949,46 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     stream_template?: scalar|Param|null, // Twig template rendering the turbo-stream payload. // Default: "@MarilenaRMTurboToast/toast.stream.html.twig"
  *     cookie_name?: scalar|Param|null, // Name of the short-lived cookie transporting deferred toasts across redirects. // Default: "turbo_toast"
  * }
+ * @psalm-type PlaywrightConfig = array{
+ *     enabled?: bool|Param, // Enable Playwright Symfony integration // Default: true
+ *     intercepted_hosts?: list<scalar|Param|null>,
+ *     debug?: bool|Param, // Enable debug mode for Playwright integration // Default: "%kernel.debug%"
+ *     node_path?: scalar|Param|null, // Global default path to Node.js executable (can be overridden per browser) // Default: "node"
+ *     default_browser?: scalar|Param|null, // Name of the default Playwright browser to autowire // Default: "default"
+ *     base_url?: scalar|Param|null, // Base URL used when Playwright builds absolute URLs during tests // Default: "%env(PLAYWRIGHT_BASE_URL)%"
+ *     debug_logging?: bool|Param, // Enable verbose Playwright logging without requiring environment variables // Default: false
+ *     browsers?: array<string, array{ // Default: {"default":{"type":"chromium","headless":true,"timeout_ms":30000,"slowmo_ms":0,"args":[],"env":[]}}
+ *         type?: "chromium"|"firefox"|"webkit"|Param, // Browser engine type // Default: "chromium"
+ *         channel?: scalar|Param|null, // Default: null
+ *         headless?: bool|Param, // Default: true
+ *         timeout_ms?: int|Param, // Default: 30000
+ *         slowmo_ms?: int|Param, // Default: 0
+ *         args?: list<scalar|Param|null>,
+ *         env?: array<string, scalar|Param|null>,
+ *         node_path?: scalar|Param|null, // Override global node_path for this browser // Default: null
+ *         min_node_version?: scalar|Param|null, // Default: "18.0.0"
+ *         downloads_dir?: scalar|Param|null, // Default: null
+ *         videos_dir?: scalar|Param|null, // Default: null
+ *         screenshot_dir?: scalar|Param|null, // Default: null
+ *         tracing?: array{
+ *             enabled?: bool|Param, // Default: false
+ *             dir?: scalar|Param|null, // Default: null
+ *             screenshots?: bool|Param, // Default: false
+ *             snapshots?: bool|Param, // Default: false
+ *         },
+ *         proxy?: array{
+ *             server?: scalar|Param|null,
+ *             username?: scalar|Param|null, // Default: null
+ *             password?: scalar|Param|null, // Default: null
+ *             bypass?: scalar|Param|null, // Default: null
+ *         },
+ *     }>,
+ *     assets?: array{ // Asset handling configuration used by the in-process dev server bridge
+ *         public_roots?: list<scalar|Param|null>,
+ *         prefixes?: list<scalar|Param|null>,
+ *         disable_cache?: bool|Param, // Disable HTTP caching of assets served via the bridge (useful for tests) // Default: true
+ *     },
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -998,6 +1038,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         turbo?: TurboConfig,
  *         web_profiler?: WebProfilerConfig,
  *         marilena_rm_turbo_toast?: MarilenaRmTurboToastConfig,
+ *         playwright?: PlaywrightConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,
