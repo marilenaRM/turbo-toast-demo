@@ -24,6 +24,14 @@ Open <http://localhost:8000/>. Task storage is a JSON file (`var/tasks.json`),
 seeded on first load — delete it to reset the demo. If you edit anything under
 `assets/`, re-run `asset-map:compile`.
 
+> **Gotcha:** the bundle ships no `symfony-ux` keyword, so Flex cannot sync its
+> Stimulus controllers — they are wired by hand in `assets/controllers.json`
+> with explicit `name` overrides. A `composer require`/`update` re-runs the UX
+> synchronizer and silently drops those entries; toasts then render but never
+> connect (no auto-dismiss, no cookie consumption, and curl can't see it).
+> Restore them with `git checkout -- assets/controllers.json` — the Playwright
+> suite below is what catches this regression.
+
 ### With Docker
 
 Same prerequisite — the bundle checked out as a sibling `../TurboToastBundle`.
