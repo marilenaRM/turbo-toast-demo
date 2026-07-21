@@ -24,6 +24,23 @@ Open <http://localhost:8000/>. Task storage is a JSON file (`var/tasks.json`),
 seeded on first load — delete it to reset the demo. If you edit anything under
 `assets/`, re-run `asset-map:compile`.
 
+### With Docker
+
+Same prerequisite — the bundle checked out as a sibling `../TurboToastBundle`.
+The container serves the app with [FrankenPHP](https://frankenphp.dev/), which
+serves AssetMapper assets directly, so **no `asset-map:compile` step** is
+needed.
+
+```bash
+docker compose up --build
+```
+
+Open <http://localhost:8000/>. The sibling bundle is bind-mounted at
+`/TurboToastBundle` (where the `../TurboToastBundle` path repository resolves
+from `/app`), Composer dependencies install on first boot into a named volume,
+and `var/tasks.json` lives on the bind-mounted source. Still session-free: no
+`PHPSESSID` on any response from the container either.
+
 ## The golden rule: no session, ever
 
 The whole point of the bundle is that flash messages stop forcing a PHP

@@ -1,0 +1,6 @@
+.git
+.claude
+vendor
+var
+node_modules
+public/assets

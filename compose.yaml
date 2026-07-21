@@ -1,0 +1,28 @@
+# Dev setup for the turbo-toast demo.
+#
+# The demo depends on marilenarm/turbo-toast-bundle through a Composer *path*
+# repository (`../TurboToastBundle`), which is not on Packagist. So the sibling
+# bundle checkout is bind-mounted alongside the app, exactly like the
+# "clone both side by side" model the README already documents.
+services:
+  app:
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/app
+      # composer.json requires the bundle via `../TurboToastBundle`; from /app
+      # that path resolves to /TurboToastBundle, so mount the sibling there.
+      - ../TurboToastBundle:/TurboToastBundle
+      # Container-owned vendor/ so host-built symlinks don't leak into the image.
+      - vendor:/app/vendor
+    environment:
+      APP_ENV: dev
+    # The path-repo bundle can't be pre-installed at build time, so install on
+    # first boot (cached in the vendor volume afterwards), then serve.
+    command: >
+      sh -c "composer install --no-interaction --prefer-dist &&
+             exec frankenphp run --config /etc/frankenphp/Caddyfile"
+
+volumes:
+  vendor:
