@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turbo Toast — flash messages, minus the session</title>
+<meta name="description" content="Session-free flash & toast notifications for Symfony. Delivered over Turbo Streams and a short-lived cookie, so your pages stay HTTP-cacheable. No session, no PHPSESSID, no Cache-Control: private.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Turbo Toast — flash messages, minus the session">
+<meta property="og:description" content="Session-free flash & toast notifications for Symfony. Every toast on this page is the real bundle running.">
+<meta property="og:url" content="https://marilenarm.github.io/turbo-toast-demo/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><rect x=%2216%22 y=%2240%22 width=%2296%22 height=%2264%22 rx=%2214%22 fill=%22%23f2a63c%22/><circle cx=%2246%22 cy=%2272%22 r=%228%22 fill=%22%230a1120%22/><circle cx=%2282%22 cy=%2272%22 r=%228%22 fill=%22%230a1120%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground:    #0a1120;
+    --ground-2:  #0d1526;
+    --surface:   #131d31;
+    --surface-2: #1a2740;
+    --line:      #26324c;
+    --line-soft: #1c2740;
+    --ink:       #eaf0fb;
+    --muted:     #93a2c0;
+    --faint:     #64738f;
+
+    --amber:      #f2a63c;
+    --amber-soft: #f8bd5e;
+    --amber-deep: #c97e1c;
+
+    --success: #16a34a;
+    --error:   #dc2626;
+    --warning: #d97706;
+    --info:    #2563eb;
+    --slate:   #334155;
+
+    --radius:  14px;
+    --radius-s: 9px;
+    --maxw: 1140px;
+
+    --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+    --font-body: 'Instrument Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 620px at 78% -10%, rgba(242,166,60,.10), transparent 60%),
+      radial-gradient(900px 520px at 8% 4%, rgba(37,99,235,.10), transparent 55%),
+      var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.04; margin: 0; letter-spacing: -.01em; }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 24px; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .74rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display: inline-flex;
+    align-items: center;
+    gap: .6em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: linear-gradient(90deg, var(--amber), transparent);
+  }
+
+  /* ---------- nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 60;
+    backdrop-filter: blur(11px);
+    background: color-mix(in srgb, var(--ground) 78%, transparent);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav__in { display: flex; align-items: center; gap: 20px; height: 62px; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; letter-spacing: -.02em; font-size: 1.06rem; text-decoration: none; }
+  .brand__mark {
+    width: 26px; height: 18px; border-radius: 6px;
+    background: linear-gradient(160deg, var(--amber-soft), var(--amber-deep));
+    position: relative; flex: none;
+    box-shadow: 0 3px 10px rgba(242,166,60,.35);
+  }
+  .brand__mark::before, .brand__mark::after {
+    content: ""; position: absolute; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--ground);
+  }
+  .brand__mark::before { left: 7px; }
+  .brand__mark::after { right: 7px; }
+  .nav__links { margin-left: auto; display: flex; align-items: center; gap: 26px; }
+  .nav__links a { text-decoration: none; color: var(--muted); font-size: .93rem; transition: color .15s; }
+  .nav__links a:hover { color: var(--ink); }
+  .nav__ghlink { display: inline-flex; align-items: center; gap: 7px; padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink) !important; }
+  .nav__ghlink:hover { border-color: var(--amber); }
+  @media (max-width: 720px) { .nav__hide { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { padding: clamp(48px, 8vw, 104px) 0 clamp(40px, 6vw, 72px); }
+  .hero__grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(32px, 5vw, 68px); align-items: center; }
+  @media (max-width: 940px) { .hero__grid { grid-template-columns: 1fr; gap: 44px; } }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6.4vw, 4.5rem);
+    font-weight: 800;
+    margin: 20px 0 0;
+  }
+  .hero h1 em { font-style: normal; color: var(--amber); position: relative; white-space: nowrap; }
+  .hero h1 em::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: .08em; height: .085em;
+    background: var(--amber); opacity: .38; border-radius: 2px;
+  }
+  .hero__sub { color: var(--muted); font-size: clamp(1.02rem, 1.5vw, 1.16rem); margin: 22px 0 0; max-width: 34em; }
+  .hero__sub code { font-family: var(--font-mono); font-size: .86em; color: var(--ink); background: var(--surface); padding: .12em .42em; border-radius: 5px; border: 1px solid var(--line-soft); }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 30px; }
+  .btn {
+    font-family: var(--font-body); font-size: .96rem; font-weight: 600;
+    padding: 12px 21px; border-radius: 10px; border: 1px solid transparent;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 9px;
+    transition: transform .12s ease, box-shadow .2s ease, background .2s, border-color .2s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn--primary { background: linear-gradient(165deg, var(--amber-soft), var(--amber)); color: #2a1c05; box-shadow: 0 8px 22px -6px rgba(242,166,60,.5); }
+  .btn--primary:hover { box-shadow: 0 12px 30px -6px rgba(242,166,60,.62); }
+  .btn--ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
+  .btn--ghost:hover { border-color: var(--muted); }
+
+  .hero__foot { margin-top: 26px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; color: var(--faint); font-size: .84rem; font-family: var(--font-mono); }
+  .hero__foot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px rgba(22,163,74,.16); }
+
+  /* ---------- stage (mock app window) ---------- */
+  .stage {
+    background: linear-gradient(180deg, var(--surface), var(--ground-2));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.03);
+    overflow: hidden;
+  }
+  .stage__bar { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); background: rgba(255,255,255,.014); }
+  .stage__dots { display: flex; gap: 6px; }
+  .stage__dots i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .stage__dots i:nth-child(1){ background:#ff5f57; } .stage__dots i:nth-child(2){ background:#febc2e; } .stage__dots i:nth-child(3){ background:#28c840; }
+  .stage__url { margin-left: 8px; flex: 1; font-family: var(--font-mono); font-size: .78rem; color: var(--muted); background: var(--ground); border: 1px solid var(--line-soft); border-radius: 7px; padding: 5px 11px; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+  .stage__method { color: var(--amber); font-weight: 600; }
+  .stage__body { padding: 20px 20px 22px; min-height: 232px; }
+  .stage__h { font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; margin: 0 0 3px; }
+  .stage__hint { color: var(--faint); font-size: .82rem; margin: 0 0 15px; }
+
+  .tasklist { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .tasklist li { display: flex; align-items: center; gap: 9px; background: var(--ground); border: 1px solid var(--line-soft); border-radius: 9px; padding: 9px 12px; font-size: .92rem; transition: opacity .3s, transform .3s; }
+  .tasklist li.is-removing { opacity: 0; transform: translateX(14px); }
+  .tasklist li.is-adding { opacity: 0; transform: translateY(-6px); }
+  .tasklist .tick { width: 15px; height: 15px; border-radius: 5px; border: 1.5px solid var(--success); flex: none; position: relative; }
+  .tasklist .tick::after { content:""; position:absolute; inset: 2px; border-radius: 2px; background: var(--success); opacity: .55; }
+  .tasklist .lock { font-size: .78rem; color: var(--warning); flex: none; }
+  .task-title { flex: 1; min-width: 0; }
+  .task-del { flex: none; width: 22px; height: 22px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--faint); font-size: 1.1rem; line-height: 1; cursor: pointer; transition: background .15s, color .15s; }
+  .tasklist li:hover .task-del { color: var(--muted); }
+  .task-del:hover { background: rgba(220,38,38,.15); color: #f78a8a; }
+  .task-del:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+  .stage__add { display: flex; gap: 8px; margin-bottom: 10px; }
+  .stage__add input {
+    flex: 1; min-width: 0;
+    background: var(--ground); border: 1px solid var(--line-soft); border-radius: 8px;
+    padding: 8px 12px; color: var(--ink); font-family: var(--font-body); font-size: .88rem;
+  }
+  .stage__add input::placeholder { color: var(--faint); }
+  .stage__add input:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; border-color: var(--amber); }
+
+  .stage__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--font-body); font-size: .84rem; font-weight: 600;
+    padding: 8px 13px; border-radius: 8px; cursor: pointer;
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+    transition: border-color .15s, background .15s, transform .1s;
+  }
+  .chip:hover { border-color: var(--amber); }
+  .chip:active { transform: translateY(1px); }
+  .chip--danger:hover { border-color: var(--error); }
+  .chip--go { background: var(--amber); color: #2a1c05; border-color: transparent; font-weight: 600; }
+  .chip--go:hover { border-color: transparent; filter: brightness(1.06); }
+
+  /* ---------- global toast host (faithful to the bundle) ---------- */
+  .toast-host {
+    position: fixed; top: 78px; right: 16px; z-index: 90;
+    display: flex; flex-direction: column; gap: .5rem;
+    pointer-events: none; width: min(19rem, calc(100vw - 32px));
+  }
+  .toast {
+    pointer-events: auto;
+    padding: .72rem .9rem; border-radius: .5rem;
+    color: #fff; background: var(--slate);
+    box-shadow: 0 14px 30px -8px rgba(0,0,0,.6);
+    cursor: pointer;
+    font-family: var(--font-body); font-weight: 500; font-size: .92rem; line-height: 1.34;
+    opacity: 0; transform: translateY(-8px);
+    transition: opacity .2s ease, transform .2s ease;
+    display: flex; align-items: flex-start; gap: .5rem;
+    word-break: break-word;
+  }
+  .toast--in { opacity: 1; transform: translateY(0); }
+  .toast--success { background: var(--success); }
+  .toast--error   { background: var(--error); }
+  .toast--warning { background: var(--warning); }
+  .toast--info    { background: var(--info); }
+  .toast:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  @media (max-width: 560px) { .toast-host { left: 12px; right: 12px; width: auto; } }
+
+  /* ---------- generic section ---------- */
+  .section { padding: clamp(56px, 8vw, 96px) 0; border-top: 1px solid var(--line-soft); }
+  .section__head { max-width: 40rem; margin-bottom: 42px; }
+  .section__head h2 { font-size: clamp(1.8rem, 3.6vw, 2.6rem); margin-top: 14px; }
+  .section__head p { color: var(--muted); margin: 14px 0 0; }
+
+  /* ---------- session tax (header diff) ---------- */
+  .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 820px) { .diff { grid-template-columns: 1fr; } }
+  .resp { background: var(--ground-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .resp--good { border-color: color-mix(in srgb, var(--success) 45%, var(--line)); }
+  .resp__tag { display: flex; align-items: center; gap: 9px; padding: 13px 17px; font-size: .86rem; font-weight: 600; border-bottom: 1px solid var(--line-soft); }
+  .resp__tag .badge { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; }
+  .resp--bad .badge { background: rgba(220,38,38,.14); color: #f8a3a3; }
+  .resp--good .badge { background: rgba(22,163,74,.16); color: #77dd9c; }
+  .resp pre { margin: 0; padding: 17px; font-family: var(--font-mono); font-size: .82rem; line-height: 1.75; overflow-x: auto; color: var(--muted); }
+  .resp pre .k { color: #b9c6e0; }
+  .resp .bad { color: #f78a8a; font-weight: 600; }
+  .resp .good { color: #6ee7a0; font-weight: 600; }
+  .resp .cmt { color: var(--faint); }
+  .resp .strike { text-decoration: line-through; text-decoration-color: #f78a8a; opacity: .72; }
+  .diff__note { margin-top: 20px; color: var(--muted); font-size: .95rem; display: flex; gap: 11px; align-items: flex-start; }
+  .diff__note b { color: var(--ink); font-weight: 600; }
+  .diff__note .mk { color: var(--amber); flex: none; font-family: var(--font-mono); }
+
+  /* ---------- transports ---------- */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; }
+  .card__k { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
+  .card__h { font-size: 1.28rem; margin: 9px 0 6px; }
+  .card__p { color: var(--muted); font-size: .95rem; margin: 0 0 16px; }
+  .code { background: var(--ground); border: 1px solid var(--line-soft); border-radius: var(--radius-s); padding: 15px 16px; overflow-x: auto; margin: 0 0 16px; }
+  .code pre { margin: 0; font-family: var(--font-mono); font-size: .82rem; line-height: 1.7; color: #d6def0; }
+  .code .cm { color: var(--faint); }
+  .code .fn { color: var(--amber-soft); }
+  .code .kw { color: #7ea2ff; }
+  .code .st { color: #8fd9a8; }
+  .code .var { color: #e2b6f0; }
+  .code .num { color: #f0b46a; }
+  .card__try { margin-top: auto; align-self: flex-start; }
+  .card__tryrow { margin-top: auto; display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+
+  /* ---------- transport decision matrix ---------- */
+  .matrix__intro { color: var(--muted); margin: 30px 0 0; font-size: .95rem; }
+  .matrix__intro code { font-family: var(--font-mono); font-size: .86em; color: var(--ink); }
+  .matrix { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--ground-2); }
+  .matrix__cap { padding: 13px 20px; border-bottom: 1px solid var(--line-soft); font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); }
+  .matrix__row { display: grid; grid-template-columns: minmax(10rem, 12rem) 1fr auto; gap: 20px; align-items: center; padding: 17px 20px; }
+  .matrix__row + .matrix__row { border-top: 1px solid var(--line-soft); }
+  .matrix__row--base { background: rgba(255,255,255,.015); }
+  .matrix__api { font-family: var(--font-mono); font-size: .9rem; font-weight: 600; color: var(--amber-soft); }
+  .matrix__row--base .matrix__api { color: var(--muted); }
+  .matrix__transport { font-family: var(--font-mono); font-size: .67rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+  .matrix__when { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.5; }
+  .matrix__when b { color: var(--ink); font-weight: 600; }
+  .matrix__tags { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; white-space: nowrap; }
+  .matrix__tag { font-family: var(--font-mono); font-size: .72rem; }
+  .matrix__tag--dim { color: var(--faint); }
+  .matrix__tag--ok { color: #6ee7a0; }
+  .matrix__tag--no { color: #f78a8a; }
+  .matrix__tag--warn { color: var(--amber-soft); }
+  @media (max-width: 720px) {
+    .matrix__row { grid-template-columns: 1fr; gap: 9px; }
+    .matrix__tags { flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; }
+  }
+
+  /* ---------- features ---------- */
+  .feat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .feat { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .feat { grid-template-columns: 1fr; } }
+  .fcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 21px; transition: border-color .2s, transform .2s; }
+  .fcard:hover { border-color: var(--line); transform: translateY(-2px); }
+  .fcard__i { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; margin-bottom: 13px; font-family: var(--font-mono); font-weight: 600; font-size: .95rem; }
+  .fcard h3 { font-size: 1.04rem; font-weight: 700; margin: 0 0 6px; }
+  .fcard p { color: var(--muted); font-size: .89rem; margin: 0; }
+  .fcard code { font-family: var(--font-mono); font-size: .84em; color: var(--ink); }
+  .i-a11y { background: rgba(37,99,235,.14); color: #8fb0ff; }
+  .i-xss  { background: rgba(220,38,38,.14); color: #f78a8a; }
+  .i-budget { background: rgba(217,119,6,.16); color: #f0b46a; }
+  .i-discard { background: rgba(220,38,38,.14); color: #f78a8a; }
+  .i-guard { background: rgba(242,166,60,.16); color: var(--amber-soft); }
+  .i-log { background: rgba(22,163,74,.16); color: #6ee7a0; }
+
+  /* ---------- xss live proof ---------- */
+  .xss { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(22px, 3vw, 32px); display: grid; grid-template-columns: 1fr auto; gap: 26px; align-items: center; }
+  @media (max-width: 760px) { .xss { grid-template-columns: 1fr; } }
+  .xss h3 { font-size: 1.35rem; margin: 8px 0 8px; }
+  .xss p { color: var(--muted); margin: 0 0 8px; font-size: .95rem; }
+  .xss .payload { font-family: var(--font-mono); font-size: .8rem; background: var(--ground); border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px 12px; color: #f0b46a; overflow-x: auto; margin: 14px 0 18px; }
+
+  /* ---------- profiler mock ---------- */
+  .prof { background: var(--ground-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .prof__bar { display: flex; align-items: center; gap: 10px; padding: 11px 16px; background: var(--slate); font-family: var(--font-mono); font-size: .8rem; }
+  .prof__bar .tt { display: inline-flex; align-items: center; gap: 7px; color: #fff; }
+  .prof__bar .cnt { margin-left: auto; display: flex; gap: 7px; }
+  .prof__bar .cnt span { padding: 2px 9px; border-radius: 999px; font-size: .72rem; }
+  .prof__bar .cnt .red { background: var(--error); color: #fff; }
+  .prof__bar .cnt .dim { background: rgba(255,255,255,.12); color: #dfe6f3; }
+  .prof__rows { display: grid; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 700px) { .prof__rows { grid-template-columns: 1fr; } }
+  .prof__col { padding: 20px; }
+  .prof__col + .prof__col { border-left: 1px solid var(--line-soft); }
+  @media (max-width: 700px) { .prof__col + .prof__col { border-left: 0; border-top: 1px solid var(--line-soft); } }
+  .prof__col h4 { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--amber); margin: 0 0 14px; font-weight: 600; }
+  .prof__stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line-soft); font-family: var(--font-mono); font-size: .85rem; }
+  .prof__stat:last-child { border-bottom: 0; }
+  .prof__stat .n { font-weight: 600; }
+  .prof__stat .n.red { color: #f78a8a; }
+  .prof__stat .n.grn { color: #6ee7a0; }
+
+  /* ---------- get started ---------- */
+  .start { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: start; }
+  @media (max-width: 860px) { .start { grid-template-columns: 1fr; } }
+  .term { background: var(--ground-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .term__bar { display: flex; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
+  .term__bar i { width: 11px; height: 11px; border-radius: 50%; }
+  .term__bar i:nth-child(1){ background:#ff5f57;} .term__bar i:nth-child(2){ background:#febc2e;} .term__bar i:nth-child(3){ background:#28c840;}
+  .term pre { margin: 0; padding: 18px; font-family: var(--font-mono); font-size: .82rem; line-height: 1.85; overflow-x: auto; color: #d6def0; }
+  .term .p { color: var(--amber); } .term .cm { color: var(--faint); } .term .st { color: #8fd9a8; }
+  .start__side h3 { font-size: 1.3rem; margin: 0 0 12px; }
+  .start__side p { color: var(--muted); font-size: .95rem; margin: 0 0 18px; }
+  .linklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .linklist a { display: flex; align-items: center; gap: 11px; text-decoration: none; padding: 13px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; transition: border-color .18s, transform .12s; }
+  .linklist a:hover { border-color: var(--amber); transform: translateX(3px); }
+  .linklist .arw { margin-left: auto; color: var(--faint); }
+  .linklist b { font-weight: 600; }
+  .linklist small { display: block; color: var(--faint); font-family: var(--font-mono); font-size: .76rem; margin-top: 1px; }
+
+  /* ---------- footer ---------- */
+  .footer { border-top: 1px solid var(--line-soft); padding: 40px 0; color: var(--faint); font-size: .86rem; }
+  .footer__in { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .footer a { color: var(--muted); text-decoration: none; }
+  .footer a:hover { color: var(--ink); }
+
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 3px; }
+
+  /* ---------- entrance motion ---------- */
+  .reveal { opacity: 0; transform: translateY(16px); }
+  .revealed { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
+  .hero .reveal { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+  .hero__grid > *:nth-child(1) .reveal:nth-child(1){ animation-delay:.02s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .revealed, .hero .reveal { opacity: 1 !important; transform: none !important; animation: none !important; transition: none !important; }
+    .toast { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- global toast host — faithful to the bundle's #toasts container -->
+<div class="toast-host" data-toast-host aria-live="polite" aria-atomic="false"></div>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true"></span>Turbo Toast</a>
+    <nav class="nav__links" aria-label="Primary">
+      <a class="nav__hide" href="#why">Why</a>
+      <a class="nav__hide" href="#transports">Transports</a>
+      <a class="nav__hide" href="#hardening">Hardening</a>
+      <a class="nav__hide" href="#run">Run it</a>
+      <a class="nav__ghlink" href="https://github.com/marilenaRM/turbo-toast-demo" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div>
+        <span class="eyebrow reveal">marilenarm/turbo-toast-bundle · v0.2.0</span>
+        <h1 class="reveal">Flash messages,<br><em>minus the session</em>.</h1>
+        <p class="hero__sub reveal">
+          Symfony's <code>addFlash()</code> quietly starts a session (a lock, a
+          <code>PHPSESSID</code> cookie, <code>Cache-Control: private</code>). Turbo Toast ships the
+          same notifications over a Turbo Stream or a short-lived cookie instead, so your pages stay
+          HTTP-cacheable. Every toast on this page is the real bundle running. Click something.
+        </p>
+        <div class="cta-row reveal">
+          <a class="btn btn--primary" href="#transports">See the two transports</a>
+          <a class="btn btn--ghost" href="https://github.com/marilenaRM/turbo-toast-bundle" target="_blank" rel="noopener">The bundle →</a>
+        </div>
+        <div class="hero__foot reveal">
+          <span class="dot" aria-hidden="true"></span> no session · no PHPSESSID · HTTP-cacheable
+        </div>
+      </div>
+
+      <!-- live stage: the demo app, faithful behavior -->
+      <div class="stage reveal" aria-label="Live demo of the Turbo Toast bundle">
+        <div class="stage__bar">
+          <span class="stage__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="stage__url"><span class="stage__method" data-url-method>GET</span><span data-url-path>localhost:8000/</span></span>
+        </div>
+        <div class="stage__body">
+          <p class="stage__h">Tasks</p>
+          <p class="stage__hint">Add a task, or delete any row. Both fire the real toasts.</p>
+          <ul class="tasklist" data-tasklist>
+            <li data-id="1">
+              <span class="tick" aria-hidden="true"></span>
+              <span class="task-title">Write the release notes</span>
+              <button class="task-del" type="button" data-task-delete aria-label="Delete task: Write the release notes">×</button>
+            </li>
+            <li data-id="2">
+              <span class="tick" aria-hidden="true"></span>
+              <span class="task-title">Review the pull request</span>
+              <button class="task-del" type="button" data-task-delete aria-label="Delete task: Review the pull request">×</button>
+            </li>
+            <li data-id="3">
+              <span class="tick" aria-hidden="true"></span>
+              <span class="task-title">Deploy the docs</span>
+              <span class="lock" title="locked">🔒 locked</span>
+              <button class="task-del" type="button" data-task-delete aria-label="Delete task: Deploy the docs (locked)">×</button>
+            </li>
+          </ul>
+          <form class="stage__add" data-add-form>
+            <input type="text" data-add-input placeholder="New task title" aria-label="New task title" maxlength="60">
+            <button class="chip chip--go" type="submit">＋ Add task</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY: the session tax -->
+  <section class="section" id="why">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="eyebrow">The session tax</span>
+        <h2>One flash message, and your page stops being cacheable.</h2>
+        <p>
+          A session isn't free. The moment one starts, Symfony marks the response
+          <code style="font-family:var(--font-mono);font-size:.9em">private</code> and drops a
+          <code style="font-family:var(--font-mono);font-size:.9em">PHPSESSID</code> cookie, so no shared cache,
+          CDN, or reverse proxy will ever serve that page. Here's the same landing page, both ways.
+        </p>
+      </div>
+
+      <div class="diff">
+        <div class="resp resp--bad">
+          <div class="resp__tag"><span class="badge">with addFlash()</span> starts a session</div>
+<pre><span class="cmt">$ curl -sI https://app.example/</span>
+<span class="k">HTTP/1.1</span> 200 OK
+<span class="k">Set-Cookie:</span> <span class="bad">PHPSESSID</span>=8f3a2b…; path=/; HttpOnly
+<span class="k">Cache-Control:</span> max-age=0, <span class="bad">private</span>, must-revalidate
+<span class="k">Vary:</span> Cookie
+<span class="cmt"># uncacheable — every hit reaches PHP</span></pre>
+        </div>
+
+        <div class="resp resp--good">
+          <div class="resp__tag"><span class="badge">with Turbo Toast</span> no session</div>
+<pre><span class="cmt">$ curl -sI https://app.example/</span>
+<span class="k">HTTP/1.1</span> 200 OK
+<span class="cmt"># <span class="strike">Set-Cookie: PHPSESSID</span> — never set</span>
+<span class="k">Cache-Control:</span> <span class="good">public</span>, max-age=3600
+<span class="cmt"># </span>
+<span class="cmt"># cacheable — your CDN serves it</span></pre>
+        </div>
+      </div>
+
+      <p class="diff__note">
+        <span class="mk">↳</span>
+        <span>Doesn't <code style="font-family:var(--font-mono);font-size:.9em">deferToast()</code> force
+        <code style="font-family:var(--font-mono);font-size:.9em">private</code> too? Only on the <b>redirect</b>,
+        and a 302 is never stored by a shared cache anyway. The real difference is scope:
+        <code style="font-family:var(--font-mono);font-size:.9em">addFlash()</code> plants a <b>persistent</b>
+        <code style="font-family:var(--font-mono);font-size:.9em">PHPSESSID</code> that keeps the landing page
+        (and every page after it) <code style="font-family:var(--font-mono);font-size:.9em">private</code> too, while
+        <b>turbo_toast</b> is a single-use cookie, consumed on the next load and gone. The toast rides that cookie and
+        is injected client-side, never baked into the HTML, so the page a cache actually stores is identical for
+        every user and stays <b>public</b>.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- TRANSPORTS -->
+  <section class="section" id="transports">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="eyebrow">Two transports, one API</span>
+        <h2>Pick the transport that fits the request.</h2>
+        <p>An AJAX or Turbo flow carries the toast in the stream it's already returning.
+           A classic full-page redirect hands it off through a tiny cookie. Same helpers either way.</p>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <span class="card__k">AJAX / Turbo flow</span>
+          <h3 class="card__h">Over a Turbo Stream</h3>
+          <p class="card__p">The toast rides the <code style="font-family:var(--font-mono)">&lt;turbo-stream&gt;</code> response the action already returns. No redirect, URL unchanged.</p>
+          <div class="code">
+<pre><span class="cm">// one line — returns a Turbo Stream response</span>
+<span class="kw">return</span> <span class="var">$this</span>-&gt;<span class="fn">toast</span>(<span class="st">'Task added'</span>);
+
+<span class="cm">// several at once, with types &amp; a per-toast delay</span>
+<span class="kw">return</span> <span class="var">$this</span>-&gt;<span class="fn">toasts</span>(
+    <span class="kw">new</span> <span class="fn">Toast</span>(<span class="st">'Task deleted'</span>, <span class="st">'warning'</span>),
+    <span class="kw">new</span> <span class="fn">Toast</span>(<span class="st">'Undo is not implemented'</span>, <span class="st">'info'</span>, <span class="num">8000</span>),
+);</pre>
+          </div>
+          <div class="card__tryrow">
+            <button class="btn btn--ghost" data-demo="streamOne">Try the one-liner →</button>
+            <button class="btn btn--ghost" data-demo="streamMany">Try several at once →</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="card__k">Full-page redirect</span>
+          <h3 class="card__h">Over a cookie</h3>
+          <p class="card__p">A short-lived, non-session cookie carries the toast across the redirect, then clears itself before rendering, so a back/forward navigation won't replay it.</p>
+          <div class="code">
+<pre><span class="cm">// queue it, then redirect however you like</span>
+<span class="var">$this</span>-&gt;<span class="fn">deferToast</span>(<span class="st">'Profile saved'</span>);
+
+<span class="kw">return</span> <span class="var">$this</span>-&gt;<span class="fn">redirectToRoute</span>(<span class="st">'app_home'</span>);
+
+<span class="cm">// the redirect is forced Cache-Control: private,</span>
+<span class="cm">// so the cookie never lands in a shared cache.</span></pre>
+          </div>
+          <button class="btn btn--ghost card__try" data-demo="defer">Try it →</button>
+        </div>
+      </div>
+
+      <p class="matrix__intro">The two cards above are the bundle. Here's when to reach for each, and when Symfony's built-in <code>addFlash()</code> is still the right call:</p>
+      <div class="matrix">
+        <div class="matrix__cap">Reach for which?</div>
+
+        <div class="matrix__row">
+          <div>
+            <div class="matrix__api">toast() · toasts()</div>
+            <div class="matrix__transport">Turbo Stream</div>
+          </div>
+          <p class="matrix__when">An AJAX or Turbo request <b>already returning a stream</b>. The toast rides along, no navigation.</p>
+          <div class="matrix__tags">
+            <span class="matrix__tag matrix__tag--dim">no session</span>
+            <span class="matrix__tag matrix__tag--ok">stays public ✓</span>
+          </div>
+        </div>
+
+        <div class="matrix__row">
+          <div>
+            <div class="matrix__api">deferToast()</div>
+            <div class="matrix__transport">Cookie</div>
+          </div>
+          <p class="matrix__when">A <b>full-page redirect</b> where you want to stay session-free: cached site, stateless firewall, no shared session store.</p>
+          <div class="matrix__tags">
+            <span class="matrix__tag matrix__tag--dim">no session</span>
+            <span class="matrix__tag matrix__tag--ok">stays public ✓</span>
+          </div>
+        </div>
+
+        <div class="matrix__row matrix__row--base">
+          <div>
+            <div class="matrix__api">addFlash()</div>
+            <div class="matrix__transport">Session · Symfony default</div>
+          </div>
+          <p class="matrix__when">A full-page redirect when a <b>session already exists</b> anyway. Simpler, server-rendered, no JS.</p>
+          <div class="matrix__tags">
+            <span class="matrix__tag matrix__tag--warn">starts a session</span>
+            <span class="matrix__tag matrix__tag--no">forced private ✗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HARDENING -->
+  <section class="section" id="hardening">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="eyebrow">Hardened by default</span>
+        <h2>A toast never lies, and never executes.</h2>
+        <p>The cookie is client-modifiable by design, and a notification must never
+           become an attack surface or a false promise. The bundle handles the edges for you.</p>
+      </div>
+
+      <div class="feat">
+        <div class="fcard">
+          <div class="fcard__i i-a11y">A11y</div>
+          <h3>Screen-reader aware</h3>
+          <p>Error toasts get <code>role="alert"</code> to interrupt; the rest use <code>role="status"</code> inside an <code>aria-live</code> container.</p>
+        </div>
+        <div class="fcard">
+          <div class="fcard__i i-xss">&lt;/&gt;</div>
+          <h3>XSS-inert rendering</h3>
+          <p>Messages land through <code>textContent</code> only, and the type is filtered to <code>[\w-]</code>. Forged markup renders as plain text.</p>
+        </div>
+        <div class="fcard">
+          <div class="fcard__i i-budget">KB</div>
+          <h3>Cookie-size budget</h3>
+          <p>Over a conservative ~3.8&nbsp;KB, no cookie is set at all — a missing toast beats a truncated <code>Set-Cookie</code>.</p>
+        </div>
+        <div class="fcard">
+          <div class="fcard__i i-discard">5xx</div>
+          <h3>Discards on failure</h3>
+          <p>If the request crashes with a 500, queued toasts are drained and dropped. Nothing claims success on a request that failed.</p>
+        </div>
+        <div class="fcard">
+          <div class="fcard__i i-guard">!</div>
+          <h3>Non-Turbo guard</h3>
+          <p>Calling <code>toast()</code> outside a Turbo request throws an actionable <code>LogicException</code> pointing you at <code>deferToast()</code>.</p>
+        </div>
+        <div class="fcard">
+          <div class="fcard__i i-log">log</div>
+          <h3>Its own log channel</h3>
+          <p>Dropped and discarded toasts are recorded on a <code>turbo_toast</code> Monolog channel, visible in the profiler.</p>
+        </div>
+      </div>
+
+      <!-- live XSS proof -->
+      <div class="xss" style="margin-top:26px">
+        <div>
+          <span class="eyebrow">Live proof</span>
+          <h3>Forge a malicious cookie. Watch it render as text.</h3>
+          <p>The <code>turbo_toast</code> cookie is deliberately not signed, so anyone can rewrite it in DevTools.
+             This button writes exactly this payload, then renders it the way the bundle does:</p>
+          <div class="payload">[{ "message": "&lt;img src=x onerror=alert(1)&gt; forged!", "type": "success" }]</div>
+          <p style="margin:0">Because the container uses <code>textContent</code>, the <code>&lt;img&gt;</code> never executes: no alert, just inert characters. Try it:</p>
+        </div>
+        <div>
+          <button class="btn btn--primary" data-demo="xss">Forge the payload</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILER -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="eyebrow">Observability</span>
+        <h2>Every toast, traced in the profiler.</h2>
+        <p>In dev, a Turbo Toast panel counts both transports separately. A discarded toast
+           turns the toolbar red, so you notice when one silently didn't ship.</p>
+      </div>
+
+      <div class="prof">
+        <div class="prof__bar">
+          <span class="tt"><span class="brand__mark" style="width:20px;height:14px" aria-hidden="true"></span> Turbo Toast</span>
+          <span class="cnt">
+            <span class="dim">3 rendered</span>
+            <span class="dim">1 queued</span>
+            <span class="red">1 discarded</span>
+          </span>
+        </div>
+        <div class="prof__rows">
+          <div class="prof__col">
+            <h4>Rendered as Turbo Streams</h4>
+            <div class="prof__stat"><span>toast('Task added')</span><span class="n grn">✓</span></div>
+            <div class="prof__stat"><span>toasts(warning, info)</span><span class="n grn">✓ ✓</span></div>
+          </div>
+          <div class="prof__col">
+            <h4>Deferred through the cookie</h4>
+            <div class="prof__stat"><span>queued</span><span class="n">2</span></div>
+            <div class="prof__stat"><span>transported</span><span class="n grn">1</span></div>
+            <div class="prof__stat"><span>discarded (5xx / oversized)</span><span class="n red">1</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUN IT -->
+  <section class="section" id="run">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="eyebrow">Run the demo</span>
+        <h2>Clone it, and see for yourself.</h2>
+        <p>The bundle installs from a sibling checkout via a Composer <code>path</code> repository.
+           Then open DevTools and confirm the promise: no <code>PHPSESSID</code>, on any flow.</p>
+      </div>
+
+      <div class="start">
+        <div class="term">
+          <div class="term__bar" aria-hidden="true"><i></i><i></i><i></i></div>
+<pre><span class="cm"># the demo and the bundle live side by side</span>
+<span class="p">$</span> git clone …/turbo-toast-demo <span class="st">turbo-toast-demo</span>
+<span class="p">$</span> git clone …/turbo-toast-bundle <span class="st">TurboToastBundle</span>
+
+<span class="p">$</span> cd turbo-toast-demo
+<span class="p">$</span> composer install
+<span class="p">$</span> php bin/console asset-map:compile
+<span class="p">$</span> php -S localhost:8000 -t public
+
+<span class="cm"># …or the whole thing containerised</span>
+<span class="p">$</span> docker compose up --build</pre>
+        </div>
+
+        <div class="start__side">
+          <h3>Then verify the pitch</h3>
+          <p>Open <b>DevTools → Application → Cookies</b>. Exercise any flow on the demo.
+             No <code style="font-family:var(--font-mono)">PHPSESSID</code> ever appears. The only cookie you'll see is the
+             short-lived <code style="font-family:var(--font-mono)">turbo_toast</code> on a redirect, gone as soon as the toast renders.</p>
+          <ul class="linklist">
+            <li><a href="https://github.com/marilenaRM/turbo-toast-demo" target="_blank" rel="noopener">
+              <span><b>Demo repository</b><small>marilenaRM/turbo-toast-demo</small></span><span class="arw">↗</span></a></li>
+            <li><a href="https://github.com/marilenaRM/turbo-toast-bundle" target="_blank" rel="noopener">
+              <span><b>The bundle</b><small>marilenaRM/turbo-toast-bundle</small></span><span class="arw">↗</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__in">
+    <span>Turbo Toast — session-free flash notifications for Symfony 7.</span>
+    <span>
+      <a href="https://github.com/marilenaRM/turbo-toast-demo" target="_blank" rel="noopener">Demo</a> ·
+      <a href="https://github.com/marilenaRM/turbo-toast-bundle" target="_blank" rel="noopener">Bundle</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+  const host = document.querySelector('[data-toast-host]');
+  const GRACE = 50;
+
+  // Faithful reproduction of the bundle's toast controller:
+  // fade in on next frame, auto-dismiss after `delay`, remove on transitionend,
+  // dismiss on click. Message set via textContent — never innerHTML.
+  function pop({ message, type = 'success', delay = 5000 }) {
+    const safeType = String(type).replace(/[^\w-]/g, '');
+    const el = document.createElement('div');
+    el.className = 'toast toast--' + safeType;
+    el.setAttribute('role', safeType === 'error' ? 'alert' : 'status');
+    el.tabIndex = 0;
+    el.textContent = String(message);
+
+    let timer, removeTimer, onEnd;
+    const removeEl = () => {
+      clearTimeout(removeTimer);
+      if (onEnd) el.removeEventListener('transitionend', onEnd);
+      el.remove();
+    };
+    const dismiss = () => {
+      clearTimeout(timer);
+      el.classList.remove('toast--in');
+      const cs = getComputedStyle(el);
+      const ms = (parseFloat(cs.transitionDuration) || 0) * 1000;
+      if (ms === 0) { removeEl(); return; }
+      onEnd = (e) => { if (e.target === el) removeEl(); };
+      el.addEventListener('transitionend', onEnd);
+      removeTimer = setTimeout(removeEl, ms + GRACE);
+    };
+
+    el.addEventListener('click', dismiss);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dismiss(); }
+    });
+
+    host.append(el);
+    requestAnimationFrame(() => el.classList.add('toast--in'));
+    if (delay > 0) timer = setTimeout(dismiss, delay);
+    return el;
+  }
+
+  // Reflect the exercised route in the mock address bar.
+  const urlMethod = document.querySelector('[data-url-method]');
+  const urlPath = document.querySelector('[data-url-path]');
+  function route(method, path) {
+    if (!urlMethod) return;
+    urlMethod.textContent = method;
+    urlPath.textContent = 'localhost:8000' + path;
+  }
+
+  // Delete a specific row. The locked one refuses (error toast, no removal);
+  // any other row is removed and fires the toasts(warning, info) composition.
+  function deleteRow(row) {
+    if (!row || row.classList.contains('is-removing')) return;
+    const id = row.dataset.id || '?';
+    if (row.querySelector('.lock')) {
+      route('POST', '/tasks/' + id + '/delete');
+      pop({ message: 'This task is locked and cannot be deleted', type: 'error' });
+      return;
+    }
+    route('POST', '/tasks/' + id + '/delete');
+    row.classList.add('is-removing');
+    setTimeout(() => row.remove(), 320);
+    pop({ message: 'Task deleted', type: 'warning' });
+    pop({ message: 'Undo is not implemented', type: 'info', delay: 8000 });
+  }
+
+  // Append a real row: the title is set via textContent — XSS-safe, the same
+  // discipline the bundle uses for toast messages. Each row gets its own delete.
+  let nextTaskId = 4;
+  function addTask(title) {
+    const list = document.querySelector('[data-tasklist]');
+    if (!list) return;
+    const li = document.createElement('li');
+    li.className = 'is-adding';
+    li.dataset.id = String(nextTaskId++);
+    const tick = document.createElement('span');
+    tick.className = 'tick';
+    tick.setAttribute('aria-hidden', 'true');
+    const titleEl = document.createElement('span');
+    titleEl.className = 'task-title';
+    titleEl.textContent = title;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'task-del';
+    del.setAttribute('data-task-delete', '');
+    del.setAttribute('aria-label', 'Delete task: ' + title);
+    del.textContent = '×';
+    li.append(tick, titleEl, del);
+    list.append(li);
+    requestAnimationFrame(() => li.classList.remove('is-adding'));
+  }
+
+  const actions = {
+    streamOne()  { route('POST', '/tasks/quick'); pop({ message: 'Task added', type: 'success' }); },
+    streamMany() {
+      route('POST', '/tasks');
+      pop({ message: 'Task deleted', type: 'warning' });
+      pop({ message: 'Undo is not implemented', type: 'info', delay: 8000 });
+    },
+    defer()  { route('POST', '/profile'); pop({ message: 'Profile saved', type: 'success' }); },
+    xss() {
+      // The exact playground payload — rendered inert because textContent is used.
+      pop({ message: '<img src=x onerror=alert(1)> forged!', type: 'success', delay: 8000 });
+    },
+  };
+
+  document.addEventListener('click', (e) => {
+    const del = e.target.closest('[data-task-delete]');
+    if (del) { deleteRow(del.closest('li')); return; }
+    const btn = e.target.closest('[data-demo]');
+    if (!btn) return;
+    const fn = actions[btn.getAttribute('data-demo')];
+    if (fn) fn();
+  });
+
+  // The stage's add form actually appends the task, then pops the toast —
+  // the composed-stream flow (row append + toast) the demo returns on POST /tasks.
+  const addForm = document.querySelector('[data-add-form]');
+  if (addForm) {
+    addForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = addForm.querySelector('[data-add-input]');
+      const title = (input.value || '').trim() || 'New task';
+      addTask(title);
+      input.value = '';
+      route('POST', '/tasks');
+      pop({ message: 'Task added', type: 'success' });
+    });
+  }
+
+  // Scroll reveals (skipped under reduced-motion via CSS neutralising the classes).
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (en.isIntersecting) { en.target.classList.add('revealed'); io.unobserve(en.target); }
+      }
+    }, { rootMargin: '0px 0px -8% 0px', threshold: .05 });
+    document.querySelectorAll('.section .section__head, .diff, .two, .feat, .xss, .prof, .start')
+      .forEach((el) => { el.classList.add('reveal'); io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>
