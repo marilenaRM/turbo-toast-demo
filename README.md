@@ -4,6 +4,10 @@ Demo application for [`marilenarm/turbo-toast-bundle`](https://github.com/marile
 (v0.2.0) — session-free flash/toast notifications for Symfony that keep pages
 HTTP-cacheable. Every feature of the bundle is reachable from this app's UI.
 
+A standalone presentation page — the pitch, a live toast demo, and the
+hardening proof — is published via GitHub Pages:
+<https://marilenarm.github.io/turbo-toast-demo/> (source: `docs/index.html`).
+
 ## Setup
 
 Requirements: PHP >= 8.3, Composer, and the bundle source checked out as a
