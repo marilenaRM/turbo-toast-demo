@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Turbo Toast — flash messages, minus the session</title>
-<meta name="description" content="Session-free flash & toast notifications for Symfony. Delivered over Turbo Streams and a short-lived cookie, so your pages stay HTTP-cacheable. No session, no PHPSESSID, no Cache-Control: private.">
+<meta name="description" content="Session-free flash & toast notifications for Symfony, delivered over a Turbo Stream or a short-lived cookie so your pages stay HTTP-cacheable: no session, no PHPSESSID, no Cache-Control: private.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Turbo Toast — flash messages, minus the session">
-<meta property="og:description" content="Session-free flash & toast notifications for Symfony. Every toast on this page is the real bundle running.">
+<meta property="og:description" content="Session-free flash & toast notifications for Symfony, with a clickable replica of the bundle's toasts.">
 <meta property="og:url" content="https://marilenarm.github.io/turbo-toast-demo/">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='22' y='15' width='34' height='13' rx='6.5' fill='%2364748b'/><rect x='8' y='30' width='46' height='20' rx='9' fill='%23f2a63c'/><rect x='15' y='36' width='28' height='4' rx='2' fill='%230f1729'/><rect x='15' y='43' width='18' height='4' rx='2' fill='%230f1729'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -222,6 +222,7 @@
   .section__head { max-width: 40rem; margin-bottom: 42px; }
   .section__head h2 { font-size: clamp(1.8rem, 3.6vw, 2.6rem); margin-top: 14px; }
   .section__head p { color: var(--muted); margin: 14px 0 0; }
+  .section__head code, .diff__note code { font-family: var(--font-mono); font-size: .9em; }
 
   /* ---------- session tax (header diff) ---------- */
   .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -249,6 +250,7 @@
   .card__k { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   .card__h { font-size: 1.28rem; margin: 9px 0 6px; }
   .card__p { color: var(--muted); font-size: .95rem; margin: 0 0 16px; }
+  .card__p code { font-family: var(--font-mono); }
   .code { background: var(--ground); border: 1px solid var(--line-soft); border-radius: var(--radius-s); padding: 15px 16px; overflow-x: auto; margin: 0 0 16px; }
   .code pre { margin: 0; font-family: var(--font-mono); font-size: .82rem; line-height: 1.7; color: #d6def0; }
   .code .cm { color: var(--faint); }
@@ -305,13 +307,16 @@
   .xss { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(22px, 3vw, 32px); display: grid; grid-template-columns: 1fr auto; gap: 26px; align-items: center; }
   @media (max-width: 760px) { .xss { grid-template-columns: 1fr; } }
   .xss h3 { font-size: 1.35rem; margin: 8px 0 8px; }
+  .feat + .xss { margin-top: 26px; }
   .xss p { color: var(--muted); margin: 0 0 8px; font-size: .95rem; }
+  .xss p:last-child { margin: 0; }
   .xss .payload { font-family: var(--font-mono); font-size: .8rem; background: var(--ground); border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px 12px; color: #f0b46a; overflow-x: auto; margin: 14px 0 18px; }
 
   /* ---------- profiler mock ---------- */
   .prof { background: var(--ground-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
   .prof__bar { display: flex; align-items: center; gap: 10px; padding: 11px 16px; background: var(--slate); font-family: var(--font-mono); font-size: .8rem; }
   .prof__bar .tt { display: inline-flex; align-items: center; gap: 7px; color: #fff; }
+  .prof__bar .brand__mark { width: 20px; height: 20px; }
   .prof__bar .cnt { margin-left: auto; display: flex; gap: 7px; }
   .prof__bar .cnt span { padding: 2px 9px; border-radius: 999px; font-size: .72rem; }
   .prof__bar .cnt .red { background: var(--error); color: #fff; }
@@ -339,6 +344,7 @@
   .term .p { color: var(--amber); } .term .cm { color: var(--faint); } .term .st { color: #8fd9a8; }
   .start__side h3 { font-size: 1.3rem; margin: 0 0 12px; }
   .start__side p { color: var(--muted); font-size: .95rem; margin: 0 0 18px; }
+  .start__side code { font-family: var(--font-mono); }
   .linklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
   .linklist a { display: flex; align-items: center; gap: 11px; text-decoration: none; padding: 13px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; transition: border-color .18s, transform .12s; }
   .linklist a:hover { border-color: var(--amber); transform: translateX(3px); }
@@ -393,13 +399,14 @@
   <section class="hero">
     <div class="wrap hero__grid">
       <div>
-        <span class="eyebrow reveal">marilenarm/turbo-toast-bundle · v0.2.0</span>
+        <span class="eyebrow reveal">marilenarm/turbo-toast-bundle</span>
         <h1 class="reveal">Flash messages,<br><em>minus the session</em>.</h1>
         <p class="hero__sub reveal">
-          Symfony's <code>addFlash()</code> quietly starts a session (a lock, a
-          <code>PHPSESSID</code> cookie, <code>Cache-Control: private</code>). Turbo Toast ships the
+          Symfony's <code>addFlash()</code> starts a session behind your back, and with it come a lock,
+          a <code>PHPSESSID</code> cookie and <code>Cache-Control: private</code>. Turbo Toast ships the
           same notifications over a Turbo Stream or a short-lived cookie instead, so your pages stay
-          HTTP-cacheable. Every toast on this page is the real bundle running. Click something.
+          HTTP-cacheable. The toasts on this page mirror the bundle's controller: same markup, same ARIA
+          roles, text-only rendering. Click something.
         </p>
         <div class="cta-row reveal">
           <a class="btn btn--primary" href="#transports">See the two transports</a>
@@ -418,7 +425,7 @@
         </div>
         <div class="stage__body">
           <p class="stage__h">Tasks</p>
-          <p class="stage__hint">Add a task, or delete any row. Both fire the real toasts.</p>
+          <p class="stage__hint">Add a task or delete a row: you get the same toasts the demo app sends back.</p>
           <ul class="tasklist" data-tasklist>
             <li data-id="1">
               <span class="tick" aria-hidden="true"></span>
@@ -453,10 +460,9 @@
         <span class="eyebrow">The session tax</span>
         <h2>One flash message, and your page stops being cacheable.</h2>
         <p>
-          A session isn't free. The moment one starts, Symfony marks the response
-          <code style="font-family:var(--font-mono);font-size:.9em">private</code> and drops a
-          <code style="font-family:var(--font-mono);font-size:.9em">PHPSESSID</code> cookie, so no shared cache,
-          CDN, or reverse proxy will ever serve that page. Here's the same landing page, both ways.
+          The moment a session starts, Symfony marks the response <code>private</code> and drops a
+          <code>PHPSESSID</code> cookie, so no CDN or reverse proxy will ever serve that page from
+          cache. Here's the same landing page, both ways.
         </p>
       </div>
 
@@ -484,15 +490,13 @@
 
       <p class="diff__note">
         <span class="mk">↳</span>
-        <span>Doesn't <code style="font-family:var(--font-mono);font-size:.9em">deferToast()</code> force
-        <code style="font-family:var(--font-mono);font-size:.9em">private</code> too? Only on the <b>redirect</b>,
-        and a 302 is never stored by a shared cache anyway. The real difference is scope:
-        <code style="font-family:var(--font-mono);font-size:.9em">addFlash()</code> plants a <b>persistent</b>
-        <code style="font-family:var(--font-mono);font-size:.9em">PHPSESSID</code> that keeps the landing page
-        (and every page after it) <code style="font-family:var(--font-mono);font-size:.9em">private</code> too, while
-        <b>turbo_toast</b> is a single-use cookie, consumed on the next load and gone. The toast rides that cookie and
-        is injected client-side, never baked into the HTML, so the page a cache actually stores is identical for
-        every user and stays <b>public</b>.</span>
+        <span>Doesn't <code>deferToast()</code> force <code>private</code> too? Only on the redirect
+        itself, and shared caches don't store a 302 by default anyway. The real difference is scope:
+        <code>addFlash()</code> plants a persistent <code>PHPSESSID</code> that keeps the landing page,
+        and every page after it, <code>private</code> as well. The <code>turbo_toast</code> cookie is
+        single-use: read on the next load, then deleted. Since the toast is injected client-side instead
+        of being baked into the HTML, the page a cache stores is the same for every user and
+        <b>stays public</b>.</span>
       </p>
     </div>
   </section>
@@ -503,15 +507,16 @@
       <div class="section__head">
         <span class="eyebrow">Two transports, one API</span>
         <h2>Pick the transport that fits the request.</h2>
-        <p>An AJAX or Turbo flow carries the toast in the stream it's already returning.
-           A classic full-page redirect hands it off through a tiny cookie. Same helpers either way.</p>
+        <p>An AJAX or Turbo flow carries the toast in the stream it already returns, while a classic
+           full-page redirect hands it off through a tiny cookie. The helper you call follows the
+           response you return.</p>
       </div>
 
       <div class="two">
         <div class="card">
           <span class="card__k">AJAX / Turbo flow</span>
           <h3 class="card__h">Over a Turbo Stream</h3>
-          <p class="card__p">The toast rides the <code style="font-family:var(--font-mono)">&lt;turbo-stream&gt;</code> response the action already returns. No redirect, URL unchanged.</p>
+          <p class="card__p">The toast is appended to the <code>&lt;turbo-stream&gt;</code> response the action already returns. No redirect, URL unchanged.</p>
           <div class="code">
 <pre><span class="cm">// one line — returns a Turbo Stream response</span>
 <span class="kw">return</span> <span class="var">$this</span>-&gt;<span class="fn">toast</span>(<span class="st">'Task added'</span>);
@@ -545,7 +550,7 @@
         </div>
       </div>
 
-      <p class="matrix__intro">The two cards above are the bundle. Here's when to reach for each, and when Symfony's built-in <code>addFlash()</code> is still the right call:</p>
+      <p class="matrix__intro">That's the whole bundle. Here's when to reach for each helper, and when Symfony's built-in <code>addFlash()</code> is still the right call:</p>
       <div class="matrix">
         <div class="matrix__cap">Reach for which?</div>
 
@@ -554,7 +559,7 @@
             <div class="matrix__api">toast() · toasts()</div>
             <div class="matrix__transport">Turbo Stream</div>
           </div>
-          <p class="matrix__when">An AJAX or Turbo request <b>already returning a stream</b>. The toast rides along, no navigation.</p>
+          <p class="matrix__when">An AJAX or Turbo request <b>already returning a stream</b>: the toast joins it, with no navigation.</p>
           <div class="matrix__tags">
             <span class="matrix__tag matrix__tag--dim">no session</span>
             <span class="matrix__tag matrix__tag--ok">stays public ✓</span>
@@ -593,9 +598,9 @@
     <div class="wrap">
       <div class="section__head">
         <span class="eyebrow">Hardened by default</span>
-        <h2>A toast never lies, and never executes.</h2>
-        <p>The cookie is client-modifiable by design, and a notification must never
-           become an attack surface or a false promise. The bundle handles the edges for you.</p>
+        <h2>Built to stay harmless, even when the cookie is forged.</h2>
+        <p>The cookie is unsigned on purpose, so anyone can edit it in DevTools. The bundle makes sure a
+           toast still can't run markup, and that none announces success on a request that failed.</p>
       </div>
 
       <div class="feat">
@@ -612,12 +617,12 @@
         <div class="fcard">
           <div class="fcard__i i-budget">KB</div>
           <h3>Cookie-size budget</h3>
-          <p>Over a conservative ~3.8&nbsp;KB, no cookie is set at all — a missing toast beats a truncated <code>Set-Cookie</code>.</p>
+          <p>Browsers truncate or reject an oversized <code>Set-Cookie</code>, so past a cautious ~3.8&nbsp;KB the trailing toasts are dropped until the cookie fits. A single toast over budget sets no cookie at all.</p>
         </div>
         <div class="fcard">
           <div class="fcard__i i-discard">5xx</div>
           <h3>Discards on failure</h3>
-          <p>If the request crashes with a 500, queued toasts are drained and dropped. Nothing claims success on a request that failed.</p>
+          <p>If the request ends in a 5xx, queued toasts are drained and dropped, so no &ldquo;Saved!&rdquo; shows up after a crash.</p>
         </div>
         <div class="fcard">
           <div class="fcard__i i-guard">!</div>
@@ -632,14 +637,14 @@
       </div>
 
       <!-- live XSS proof -->
-      <div class="xss" style="margin-top:26px">
+      <div class="xss">
         <div>
           <span class="eyebrow">Live proof</span>
           <h3>Forge a malicious cookie. Watch it render as text.</h3>
-          <p>The <code>turbo_toast</code> cookie is deliberately not signed, so anyone can rewrite it in DevTools.
-             This button writes exactly this payload, then renders it the way the bundle does:</p>
+          <p>Here's what an edited <code>turbo_toast</code> cookie looks like. This button writes exactly
+             this payload, then renders it the way the bundle does:</p>
           <div class="payload">[{ "message": "&lt;img src=x onerror=alert(1)&gt; forged!", "type": "success" }]</div>
-          <p style="margin:0">Because the container uses <code>textContent</code>, the <code>&lt;img&gt;</code> never executes: no alert, just inert characters. Try it:</p>
+          <p>Because the container uses <code>textContent</code>, the <code>&lt;img&gt;</code> never executes: no alert, just inert characters. Try it:</p>
         </div>
         <div>
           <button class="btn btn--primary" data-demo="xss">Forge the payload</button>
@@ -660,7 +665,7 @@
 
       <div class="prof">
         <div class="prof__bar">
-          <span class="tt"><span class="brand__mark" style="width:20px;height:20px" aria-hidden="true"></span> Turbo Toast</span>
+          <span class="tt"><span class="brand__mark" aria-hidden="true"></span> Turbo Toast</span>
           <span class="cnt">
             <span class="dim">3 rendered</span>
             <span class="dim">1 queued</span>
@@ -689,9 +694,9 @@
     <div class="wrap">
       <div class="section__head">
         <span class="eyebrow">Run the demo</span>
-        <h2>Clone it, and see for yourself.</h2>
-        <p>The bundle installs from a sibling checkout via a Composer <code>path</code> repository.
-           Then open DevTools and confirm the promise: no <code>PHPSESSID</code>, on any flow.</p>
+        <h2>Clone it and check the cookies yourself.</h2>
+        <p>The demo pulls the bundle from a sibling checkout through a Composer <code>path</code>
+           repository, so both clones have to sit side by side.</p>
       </div>
 
       <div class="start">
@@ -711,10 +716,10 @@
         </div>
 
         <div class="start__side">
-          <h3>Then verify the pitch</h3>
-          <p>Open <b>DevTools → Application → Cookies</b>. Exercise any flow on the demo.
-             No <code style="font-family:var(--font-mono)">PHPSESSID</code> ever appears. The only cookie you'll see is the
-             short-lived <code style="font-family:var(--font-mono)">turbo_toast</code> on a redirect, gone as soon as the toast renders.</p>
+          <h3>What to look for</h3>
+          <p>Open <b>DevTools → Application → Cookies</b> and click through any flow: no
+             <code>PHPSESSID</code> ever shows up. The only cookie you'll see is the short-lived
+             <code>turbo_toast</code> on a redirect, and it's gone as soon as the toast renders.</p>
           <ul class="linklist">
             <li><a href="https://github.com/marilenaRM/turbo-toast-demo" target="_blank" rel="noopener">
               <span><b>Demo repository</b><small>marilenaRM/turbo-toast-demo</small></span><span class="arw">↗</span></a></li>
@@ -729,7 +734,7 @@
 
 <footer class="footer">
   <div class="wrap footer__in">
-    <span>Turbo Toast — session-free flash notifications for Symfony 7.</span>
+    <span>Turbo Toast: session-free flash notifications for Symfony.</span>
     <span>
       <a href="https://github.com/marilenaRM/turbo-toast-demo" target="_blank" rel="noopener">Demo</a> ·
       <a href="https://github.com/marilenaRM/turbo-toast-bundle" target="_blank" rel="noopener">Bundle</a>
