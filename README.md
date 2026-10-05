@@ -1,7 +1,7 @@
 # turbo-toast-demo
 
-Demo application for [`marilenarm/turbo-toast-bundle`](https://github.com/marilenaRM/turbo-toast-bundle)
-(v0.2.0) — session-free flash/toast notifications for Symfony that keep pages
+Demo application for [`marilenarm/turbo-toast-bundle`](https://github.com/marilenaRM/turbo-toast-bundle),
+session-free flash/toast notifications for Symfony that keep pages
 HTTP-cacheable. Every feature of the bundle is reachable from this app's UI.
 
 A standalone presentation page — the pitch, a live toast demo, and the
